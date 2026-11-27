@@ -348,7 +348,7 @@ function renderList(){const v=clean(rq.value);rqx.hidden=!rq.value;tabsEl.hidden
  if(MODE==='zone')return renderZones(v);if(v)return renderSearch(v);
  tabsEl.innerHTML=Object.keys(AREAS).map(a=>`<button data-a="${a}" aria-pressed="${a===TAB}">${SHORT[a]}</button>`).join('');
  const A=AREAS[TAB];hint.textContent='교육지원청 '+A.g.length+'곳 · 시군구 '+A.g.flatMap(g=>g[1]).length+'곳';
- let h=`<div class="sp">${row('전체:'+TAB,SHORT[TAB]+' 전체 보기','숫자 = 학원+교습소 수 · 확대하면 하나하나 표시')}</div>`+(TAB==='gb'&&GRPS['도청신도시']?`<div class="sp">${row('도청신도시','도청신도시','안동시·예천군 일부')}</div>`:'');
+ let h=`<div class="sp">${row('전체:'+TAB,SHORT[TAB]+' 전체 보기','숫자 = 학원+교습소 수')}</div>`+(TAB==='gb'&&GRPS['도청신도시']?`<div class="sp">${row('도청신도시','도청신도시','안동시·예천군 일부')}</div>`:'');
  h+=A.g.map(([n,m])=>{const id=TAB+':'+n;if(m.length===1)return row(m[0],oname(TAB,n),m[0]);const op=OPEN.has(id)||m.includes(CUR)||CUR===id||(TAB==='gb'&&n==='북부권'&&CUR==='도청신도시');
   return `<details data-id="${id}"${op?' open':''}><summary><strong>${oname(TAB,n)}</strong><small>${m.map(sh).join(' · ')}</small></summary><div class="in">${row(id,'관할 전체 보기',m.map(sh).join(' · '))}${m.map(r=>row(r,sh(r))).join('')}</div></details>`}).join('');
  list.innerHTML=h;list.querySelectorAll('details').forEach(el=>el.addEventListener('toggle',()=>el.open?OPEN.add(el.dataset.id):OPEN.delete(el.dataset.id)))}
