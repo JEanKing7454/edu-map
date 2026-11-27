@@ -152,7 +152,7 @@ body{font:14px var(--font);color:var(--ink);background:#eef1ec}
 #metoast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:#12263c;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;box-shadow:0 6px 18px #0005;max-width:calc(100vw - 40px);text-align:center}#metoast[hidden]{display:none}
 .navgo{display:inline-block;font-size:11px;font-weight:600;color:#12263c;background:#fff;border:1px solid #d6dcd9;padding:2px 9px;border-radius:999px;text-decoration:none}
 .adn{display:flex!important;gap:8px;align-items:flex-start;justify-content:space-between}.adn>span{min-width:0}.adn .navgo{flex:none;margin-top:1px;font-size:11px;font-weight:600;padding:1px 6px;line-height:1.5}
-</style>
+.admfx{margin:8px 0 0;display:flex;gap:6px}.admfx button{font:inherit;font-size:11px;padding:3px 9px;border-radius:999px;border:1px dashed #b45309;background:#fff7ed;color:#9a3412;cursor:pointer}body.fxmode #map{cursor:crosshair}</style>
 </head>
 <body>
 <button id="mebtn" title="내 위치 보기" aria-label="내 위치"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
@@ -183,7 +183,7 @@ body{font:14px var(--font);color:var(--ink);background:#eef1ec}
 </aside>
 <button id="ptab" hidden aria-label="메뉴 다시 보기" title="메뉴 다시 보기">›</button>
 <div id="fqchip" hidden><div class="r1"><span>검색 결과만 · <b id="fqtxt"></b></span><button id="fqx">해제</button></div><div class="r2" id="fqot" hidden></div></div>
-<script src="acc.js?v=3"></script>
+<script src="acc.js?v=4"></script>
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=ac4908c32fc80026dd5ea1a9c5982527&libraries=services&autoload=false"></script>
 <script>
 (function(){
@@ -234,7 +234,8 @@ function popAca(r){const c=r.k==='학원'?'var(--aca)':'var(--kyo)';return `<spa
 const LKR={'노원구': '202611270438', '강남구': '202611270614', '양천구': '202611270438', '서초구': '202611270614', '송파구': '202611270548', '강동구': '202611270548', '광진구': '202611270548', '강서구': '202611270647'};const LKT={home:'홈페이지',hq:'본사 홈페이지',blog:'블로그',cafe:'카페',insta:'인스타그램',youtube:'유튜브',band:'밴드'};
 function mergeLk(d,j){if(j&&j.items){const m=new Map((d.aca||[]).map(x=>[x.n+'|'+x.a,x]));for(const e of j.items){const x=m.get(e.n+'|'+e.a);if(x){x.lk=e.lk;x.rb=e.rb;x.al=e.alias}}}return d}
 async function addLk(r,d){if(!LKR[r])return d;try{mergeLk(d,await fetch('links/'+encodeURIComponent(r)+'.json?v='+LKR[r]).then(x=>x.json()))}catch(_){}return d}
-function getData(r){return ACC.on()?ACC.region(r).then(x=>{if(!x)throw new Error('no data');return mergeLk(tagD(r,x.data),x.links)}):fetch('data_'+encodeURIComponent(r)+'.json?v=20261127s',{cache:'no-cache'}).then(x=>x.json()).then(d=>tagD(r,d)).then(d=>addLk(r,d))}
+function applyFix(r,d){const F=ACC.fix?ACC.fix():{};(d.sch||[]).forEach(s=>{const f=F[r+'|'+s.n];if(f){if(!s.__o)s.__o=s.ll;s.ll=f;s.__fx=1}});return d}
+function getData(r){return ACC.on()?ACC.region(r).then(x=>{if(!x)throw new Error('no data');return applyFix(r,mergeLk(tagD(r,x.data),x.links))}):fetch('data_'+encodeURIComponent(r)+'.json?v=20261127s',{cache:'no-cache'}).then(x=>x.json()).then(d=>tagD(r,d)).then(d=>addLk(r,d))}
 function safeU(u){return /^https?:\/\//.test(u)?u:''}
 function lkHtml(r){if(!r.lk&&!r.rb&&!r.al)return '';const cnt={};const off=(r.lk||[]).filter(l=>safeU(l.u)).map(l=>{cnt[l.t]=(cnt[l.t]||0)+1;return l}).map((l,i,a)=>{const same=a.filter(y=>y.t===l.t);const lab=(LKT[l.t]||'링크')+(same.length>1?(same.indexOf(l)+1):'');return `<a class="lkb" href="${esc(l.u)}" target="_blank" rel="noopener noreferrer">${esc(lab)} ↗</a>`}).join('');
  const rb=(r.rb||[]).filter(safeU);const rel=rb.length?`<details class="rbx"><summary>관련 블로그 글 ${rb.length}건</summary><ul>${rb.map(u=>`<li><a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u.replace(/^https?:\/\/(m\.)?blog\.naver\.com\//,'').replace(/\/(\d+)$/,' · 글 $1'))}</a></li>`).join('')}</ul><small>학원이 아닌 다른 사람·업체가 쓴 글일 수 있습니다.</small></details>`:'';
@@ -339,6 +340,21 @@ function declutter(){const box=map.getNode().getBoundingClientRect();const inV=r
   if(best[0]!==24||best[1]!==14-h/2){em.classList.add('mv');em.style.left=best[0]+'px';em.style.top=best[1]+'px'}placed.push(best[2])})}
 let dcT;function dcLater(){clearTimeout(dcT);dcT=setTimeout(declutter,60)}
 kakao.maps.event.addListener(map,'idle',dcLater);
+/* 관리자: 학교 위치 직접 고치기 (admin.html 로그인 세션 사용) */
+function admTok(){try{const j=JSON.parse(localStorage.getItem('sb-enruijclegpmjamwmqym-auth-token')||'null');if(j&&j.access_token&&(!j.expires_at||j.expires_at*1000>Date.now()))return j.access_token}catch(_){}return null}
+let FXS=null,FXM=null;
+{const ps2=popSch;popSch=x=>{FXS=x;return ps2(x)+(admTok()&&x.__r?`<p class="admfx"><button type="button" class="fxgo">위치 고치기</button>${x.__fx?'<button type="button" class="fxrm">원래 위치로</button>':''}</p>`:'')}}
+async function fxSave(s,ll){const t=admTok();if(!t){meToast('관리자 화면에서 다시 로그인해 주세요',5000);return false}
+ try{const r=await fetch('https://enruijclegpmjamwmqym.supabase.co/rest/v1/rpc/admin_fix_school',{method:'POST',headers:{apikey:'sb_publishable_oaCsqN8CoNJh0d7ZSxh9TQ_vzB9mBpV',Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({p_reg:s.__r,p_name:s.n,p_lat:ll?ll[0]:null,p_lng:ll?ll[1]:null})});
+  if(!r.ok){let m='';try{m=(await r.json()).message}catch(_){}meToast(m==='not_admin'?'관리자 계정이 아닙니다':'저장하지 못했습니다 ('+(m||r.status)+')',5000);return false}}catch(_){meToast('저장하지 못했습니다 (연결 오류)',5000);return false}
+ const nl=ll||s.__o||s.ll;if(ll){if(!s.__o)s.__o=s.ll;s.__fx=1}else{s.__fx=0}s.ll=nl;const o=layers.sch.find(o=>o.rec===s);if(o)o.setPosition(LL(nl));meToast(ll?'위치를 저장했습니다. 모든 사용자에게 다음 실행부터 반영됩니다':'원래 위치로 되돌렸습니다',4000);return true}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.fxgo,.fxrm');if(!b||!FXS)return;const s=FXS;closePop();
+ if(b.classList.contains('fxrm')){if(confirm(s.n+' 위치를 원래(자동 계산) 위치로 되돌릴까요?'))fxSave(s,null);return}
+ FXM=s;document.body.classList.add('fxmode');meToast(s.n+': 새 위치를 지도에서 누르세요 (취소: Esc)',8000)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&FXM){FXM=null;document.body.classList.remove('fxmode');meToast('위치 고치기를 취소했습니다',2000)}});
+kakao.maps.event.addListener(map,'click',ev=>{if(!FXM)return;const s=FXM;FXM=null;document.body.classList.remove('fxmode');const p=ev.latLng,ll=[+p.getLat().toFixed(6),+p.getLng().toFixed(6)];
+ setTimeout(()=>{if(confirm(s.n+' 위치를 누른 곳으로 옮길까요?'))fxSave(s,ll)},30)});
+
 // ---- 내 위치 (학원 투어용): 위치는 이 기기 화면에서만 쓰고 어디에도 저장·전송하지 않음 ----
 const ME={w:null,dot:null,acc:null,follow:false,first:true,ll:null};
 const meBtn=document.getElementById('mebtn');
