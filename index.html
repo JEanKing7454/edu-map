@@ -151,7 +151,7 @@ body{font:14px var(--font);color:var(--ink);background:#eef1ec}
 @keyframes mep{0%{box-shadow:0 0 0 0 #2563eb88,0 2px 6px #0006}70%{box-shadow:0 0 0 14px #2563eb00,0 2px 6px #0006}100%{box-shadow:0 0 0 0 #2563eb00,0 2px 6px #0006}}
 #metoast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:#12263c;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;box-shadow:0 6px 18px #0005;max-width:calc(100vw - 40px);text-align:center}#metoast[hidden]{display:none}
 .navgo{display:inline-block;font-size:11px;font-weight:600;color:#12263c;background:#fff;border:1px solid #d6dcd9;padding:2px 9px;border-radius:999px;text-decoration:none}
-.adn{display:flex!important;gap:8px;align-items:flex-start;justify-content:space-between}.adn>span{min-width:0}.adn .navgo{flex:none;margin-top:1px;font-size:11px;font-weight:600}
+.adn{display:flex!important;gap:8px;align-items:flex-start;justify-content:space-between}.adn>span{min-width:0}.adn .navgo{flex:none;margin-top:1px;font-size:11px;font-weight:600;padding:1px 6px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -426,7 +426,7 @@ const q=document.getElementById('q'),res=document.getElementById('results');
 let IDX=null,IDXP=null;
 function tagD(r,d){(d.aca||[]).forEach(x=>x.__r=r);(d.sch||[]).forEach(x=>x.__r=r);return d}
 function goLink(rec){const r=rec&&rec.__r;if(!r||(r===CUR&&!FQ))return '';return `<p style="margin:8px 0 0"><button type="button" class="rmgo" data-r="${esc(r)}" style="all:unset;cursor:pointer;font-size:12px;font-weight:700;color:#12263c;text-decoration:underline">${esc(rlabel(r))} 지도 열기 ›</button></p>`}
-function navLink(rec){if(!rec||!rec.ll)return '';const u='https://map.kakao.com/link/to/'+encodeURIComponent(String(rec.n).replace(/,/g,' '))+','+rec.ll[0]+','+rec.ll[1];return `<a class="navgo" href="${u}" target="_blank" rel="noopener">길찾기 ›</a>`}
+function navLink(rec){if(!rec||!rec.ll)return '';const u='https://map.kakao.com/link/to/'+encodeURIComponent(String(rec.n).replace(/,/g,' '))+','+rec.ll[0]+','+rec.ll[1];return `<a class="navgo" href="${u}" target="_blank" rel="noopener">길찾기</a>`}
 function navIn(h,x,tag){if(!x)return h;const re=tag==='h3'?/<h3>([\s\S]*?)<\/h3>/:/<dd class="ad">([\s\S]*?)<\/dd>/;return h.replace(re,(m,c)=>tag==='h3'?`<h3 class="adn"><span>${c}</span>${x}</h3>`:`<dd class="ad adn"><span>${c}</span>${x}</dd>`)}
 function afterH3(h,x){if(!x)return h;const i=h.indexOf('</h3>');return i<0?x+h:h.slice(0,i+5)+x+h.slice(i+5)}
 {const pa=popAca,ps=popSch,pg=popGroup;popAca=r=>navIn(pa(r),navLink(r),'dd')+goLink(r);popSch=x=>navIn(ps(x),navLink(x),'dd')+goLink(x);
