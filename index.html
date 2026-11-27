@@ -428,7 +428,7 @@ function goLink(rec){const r=rec&&rec.__r;if(!r||(r===CUR&&!FQ))return '';return
 function navLink(rec){if(!rec||!rec.ll)return '';const u='https://map.kakao.com/link/to/'+encodeURIComponent(String(rec.n).replace(/,/g,' '))+','+rec.ll[0]+','+rec.ll[1];return `<p style="margin:8px 0 0;text-align:right"><a class="navgo" href="${u}" target="_blank" rel="noopener">길찾기 ›</a></p>`}
 function afterH3(h,x){if(!x)return h;const i=h.indexOf('</h3>');return i<0?x+h:h.slice(0,i+5)+x+h.slice(i+5)}
 {const pa=popAca,ps=popSch,pg=popGroup;popAca=r=>pa(r)+goLink(r)+navLink(r);popSch=x=>ps(x)+goLink(x)+navLink(x);
- popGroup=l=>afterH3(pg(l),l&&l[0]&&l[0].ll?navLink({n:roadPart(l[0].a),ll:l[0].ll}):'')}
+ popGroup=l=>pg(l)+(l&&l[0]&&l[0].ll?navLink({n:roadPart(l[0].a),ll:l[0].ll}):'')}
 function loadIdx(){if(!IDXP)IDXP=(ACC.on()?ACC.search():fetch('search_index.json?v=20261127t').then(r=>r.json())).then(j=>{IDX=j;return j}).catch(()=>{IDXP=null;return null});return IDXP}
 const KT=['학교','학원','교습소'],kOf=k=>k==='sch'?0:k==='aca'?1:2;
 function lkey(n,lat,lng){return n+'|'+Math.round(lat*1e4)+'|'+Math.round(lng*1e4)}
