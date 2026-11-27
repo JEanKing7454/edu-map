@@ -2,7 +2,7 @@
 // - 화면(index.html·아이콘): 네트워크 우선, 오프라인이면 캐시
 // - 지역 데이터는 개인 링크로 수파베이스에서 받아 앱(IndexedDB)이 따로 저장. 예전 공개 데이터 캐시는 지움
 // - 카카오 지도·API 등 다른 도메인 요청은 절대 캐시하지 않음 (카카오 이용약관)
-const SHELL='edu-shell-v53', DATA='edu-data-v1';
+const SHELL='edu-shell-v54', DATA='edu-data-v1';
 const SHELL_FILES=['./','index.html','acc.js','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(SHELL).then(c=>c.addAll(SHELL_FILES.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==SHELL&&k.startsWith('edu-')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

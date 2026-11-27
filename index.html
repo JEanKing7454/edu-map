@@ -432,7 +432,7 @@ function navIn(h,x,tag){if(!x)return h;const re=tag==='h3'?/<h3>([\s\S]*?)<\/h3>
 function afterH3(h,x){if(!x)return h;const i=h.indexOf('</h3>');return i<0?x+h:h.slice(0,i+5)+x+h.slice(i+5)}
 {const pa=popAca,ps=popSch,pg=popGroup;popAca=r=>navIn(pa(r),navLink(r),'dd')+goLink(r);popSch=x=>navIn(ps(x),navLink(x),'dd')+goLink(x);
  popGroup=l=>navIn(pg(l),l&&l[0]&&l[0].ll?navLink({n:roadPart(l[0].a),ll:l[0].ll}):'','h3')}
-function loadIdx(){if(!IDXP)IDXP=(ACC.on()?ACC.search():fetch('search_index.json?v=20261127t').then(r=>r.json())).then(j=>{IDX=j;return j}).catch(()=>{IDXP=null;return null});return IDXP}
+function loadIdx(){if(!IDXP)IDXP=(ACC.on()?ACC.search():fetch('search_index.json?v=20261127u').then(r=>r.json())).then(j=>{IDX=j;return j}).catch(()=>{IDXP=null;return null});return IDXP}
 const KT=['학교','학원','교습소'],kOf=k=>k==='sch'?0:k==='aca'?1:2;
 function lkey(n,lat,lng){return n+'|'+Math.round(lat*1e4)+'|'+Math.round(lng*1e4)}
 function qLocal(v){if(!v)return[];const all=[...layers.sch.map(o=>[o,'sch',o.rec.n,'학교 · 재학생 '+o.rec.s.toLocaleString()+'명']),...layers.aca.map(o=>[o,'aca',o.rec.n,'학원 · '+o.rec.a+' '+(o.rec.f||'')]),...layers.kyo.map(o=>[o,'kyo',o.rec.n,'교습소 · '+o.rec.a+' '+(o.rec.f||'')])];
