@@ -150,7 +150,7 @@ body{font:14px var(--font);color:var(--ink);background:#eef1ec}
 .medot{width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 2px #2563eb55,0 2px 6px #0006;animation:mep 2s infinite}
 @keyframes mep{0%{box-shadow:0 0 0 0 #2563eb88,0 2px 6px #0006}70%{box-shadow:0 0 0 14px #2563eb00,0 2px 6px #0006}100%{box-shadow:0 0 0 0 #2563eb00,0 2px 6px #0006}}
 #metoast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:#12263c;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;box-shadow:0 6px 18px #0005;max-width:calc(100vw - 40px);text-align:center}#metoast[hidden]{display:none}
-.navgo{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:#f2aa4c;color:#12263c;padding:4px 10px;border-radius:999px;text-decoration:none}
+.navgo{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;background:#f2aa4c;color:#12263c;padding:6px 12px;border-radius:999px;text-decoration:none;box-shadow:0 1px 3px #0003}
 </style>
 </head>
 <body>
@@ -425,8 +425,10 @@ const q=document.getElementById('q'),res=document.getElementById('results');
 let IDX=null,IDXP=null;
 function tagD(r,d){(d.aca||[]).forEach(x=>x.__r=r);(d.sch||[]).forEach(x=>x.__r=r);return d}
 function goLink(rec){const r=rec&&rec.__r;if(!r||(r===CUR&&!FQ))return '';return `<p style="margin:8px 0 0"><button type="button" class="rmgo" data-r="${esc(r)}" style="all:unset;cursor:pointer;font-size:12px;font-weight:700;color:#12263c;text-decoration:underline">${esc(rlabel(r))} 지도 열기 ›</button></p>`}
-function navLink(rec){if(!rec||!rec.ll)return '';const u='https://map.kakao.com/link/to/'+encodeURIComponent(String(rec.n).replace(/,/g,' '))+','+rec.ll[0]+','+rec.ll[1];return `<p style="margin:8px 0 0"><a class="navgo" href="${u}" target="_blank" rel="noopener">길찾기 (카카오맵) ›</a></p>`}
-{const pa=popAca,ps=popSch;popAca=r=>pa(r)+navLink(r)+goLink(r);popSch=x=>ps(x)+navLink(x)+goLink(x)}
+function navLink(rec){if(!rec||!rec.ll)return '';const u='https://map.kakao.com/link/to/'+encodeURIComponent(String(rec.n).replace(/,/g,' '))+','+rec.ll[0]+','+rec.ll[1];return `<p style="margin:6px 0 8px"><a class="navgo" href="${u}" target="_blank" rel="noopener">🧭 길찾기 (카카오맵)</a></p>`}
+function afterH3(h,x){if(!x)return h;const i=h.indexOf('</h3>');return i<0?x+h:h.slice(0,i+5)+x+h.slice(i+5)}
+{const pa=popAca,ps=popSch,pg=popGroup;popAca=r=>afterH3(pa(r),navLink(r))+goLink(r);popSch=x=>afterH3(ps(x),navLink(x))+goLink(x);
+ popGroup=l=>afterH3(pg(l),l&&l[0]&&l[0].ll?navLink({n:roadPart(l[0].a),ll:l[0].ll}):'')}
 function loadIdx(){if(!IDXP)IDXP=(ACC.on()?ACC.search():fetch('search_index.json?v=20261127t').then(r=>r.json())).then(j=>{IDX=j;return j}).catch(()=>{IDXP=null;return null});return IDXP}
 const KT=['학교','학원','교습소'],kOf=k=>k==='sch'?0:k==='aca'?1:2;
 function lkey(n,lat,lng){return n+'|'+Math.round(lat*1e4)+'|'+Math.round(lng*1e4)}
