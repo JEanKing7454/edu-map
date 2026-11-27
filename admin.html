@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>EduMap 관리자</title>
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<meta name="theme-color" content="#12263c">
+<style>
+:root{--ink:#1b2533;--muted:#64707f;--line:#d9dee5;--bg:#f2f4f7;--card:#fff;--navy:#12263c;--accent:#e8772e;--ok:#1f7a4d;--bad:#b42318;
+--font:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#e6eaf0;--muted:#9aa5b4;--line:#2f3a48;--bg:#0f1620;--card:#18212d}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:15px/1.5 var(--font);color:var(--ink);background:var(--bg);padding-bottom:env(safe-area-inset-bottom)}
+header{background:var(--navy);color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
+header h1{font-size:17px;margin:0;flex:1}
+header button{background:transparent;color:#fff;border:1px solid #ffffff55}
+main{max-width:760px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+h2{font-size:16px;margin:0 0 10px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input[type=text],input[type=email],input[type=password],input[type=date],select{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+button{font:inherit;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.pri{background:var(--navy);color:#fff;border-color:var(--navy)}
+button.acc{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.danger{color:var(--bad);border-color:#b4231855}
+button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted);font-size:13px}
+.err{color:var(--bad);font-size:13px;min-height:1em}
+.lk{cursor:pointer}
+.lk .t{font-weight:600}
+.badge{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;background:#64707f22;color:var(--muted);margin-left:6px}
+.badge.off{background:#b4231822;color:var(--bad)}
+.badge.ok{background:#1f7a4d22;color:var(--ok)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.tabs button{padding:5px 10px;font-size:13px;border-radius:99px}
+.tabs button[aria-pressed=true]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tabs button .n{font-size:11px;opacity:.8;margin-left:3px}
+.pk-all{margin:4px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.og{grid-column:1/-1;border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.og .sub{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;user-select:none;background:var(--card);min-width:0}
+.chk span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chk small{color:var(--muted);font-size:11px;margin-left:auto;white-space:nowrap}
+.chk input{margin:0;width:17px;height:17px;flex:none;accent-color:var(--navy)}
+.chk.on{border-color:var(--navy);background:#12263c14;font-weight:600}
+.chk.grp{border:none;padding:2px 2px;font-weight:600;background:none}
+.chk.grp.on{background:none}
+.chk.part input{opacity:.6}
+label.chk.inline{display:inline-flex}
+.gh2{font-size:12px;color:var(--muted);margin:12px 0 6px}
+.sel{font-size:13px;color:var(--muted);margin-top:8px}
+.share{background:#e8772e14;border:1px solid #e8772e66}
+.share code{display:block;word-break:break-all;font-size:13px;padding:8px;background:var(--card);border-radius:6px;margin:6px 0}
+.dev{font-size:13px;display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--line);padding:6px 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><a href="./" style="color:#fff;text-decoration:none;border:1px solid #ffffff55;border-radius:8px;padding:8px 12px;font-size:14px">← 지도로</a><h1>관리자</h1><button id="logout" hidden>로그아웃</button></header>
+<main>
+
+<section id="vLogin" class="card" hidden>
+  <h2>관리자 로그인</h2>
+  <label for="em">이메일</label><input id="em" type="email" autocomplete="username">
+  <label for="pw">비밀번호</label><input id="pw" type="password" autocomplete="current-password">
+  <p class="err" id="lerr"></p>
+  <div class="row"><button class="pri" id="bLogin">로그인</button><button id="bSignup">처음이면 계정 만들기</button></div>
+  <p class="muted">계정을 만든 뒤에는 관리자 승인이 한 번 필요합니다.</p>
+</section>
+
+<section id="vWait" class="card" hidden>
+  <h2>관리자 승인 대기</h2>
+  <p>로그인은 되었지만 아직 관리자로 등록되지 않은 계정입니다. Claude에게 "관리자 계정 만들었다"고 알려 주세요.</p>
+  <p class="muted" id="waitEm"></p>
+</section>
+
+<section id="vList" hidden>
+  <div class="row" style="justify-content:space-between;margin-bottom:12px">
+    <button class="acc" id="bNew">+ 새 개인 링크</button>
+    <span class="muted" id="stat"></span>
+  </div>
+  <input type="text" id="q" placeholder="받는 사람 찾기" style="margin-bottom:12px">
+  <div id="links"></div>
+</section>
+
+<section id="vEdit" hidden>
+  <div class="card">
+    <h2 id="eTitle">새 개인 링크</h2>
+    <label for="fLabel">받는 사람 (메모, 본인만 봄)</label>
+    <input id="fLabel" type="text" placeholder="예: 홍길동 원장 (노원)">
+    <label>열어 줄 지역</label>
+    <label class="chk inline"><input type="checkbox" id="fAll"> <span>전국 전체</span></label>
+    <div id="picker">
+      <div class="tabs" id="sTabs"></div>
+      <div id="offs"></div>
+    </div>
+    <div class="sel" id="selSum"></div>
+    <div class="row" style="margin-top:6px">
+      <div style="flex:1;min-width:140px"><label for="fDev">기기 수</label>
+        <select id="fDev"><option value="1">1대</option><option value="2" selected>2대</option><option value="3">3대</option></select></div>
+      <div style="flex:1;min-width:140px"><label for="fExp">사용 기간</label>
+        <select id="fExp"><option value="">기한 없음</option><option value="1">1개월</option><option value="3">3개월</option><option value="6">6개월</option><option value="12">1년</option><option value="d">날짜 지정</option></select></div>
+    </div>
+    <input id="fDate" type="date" hidden style="margin-top:6px">
+    <p class="muted" id="expNow"></p>
+    <p class="err" id="eerr"></p>
+    <div class="row"><button class="pri" id="bSave">저장</button><button id="bCancel">목록으로</button></div>
+  </div>
+
+  <div class="card share" id="shareBox" hidden>
+    <h2>보낼 링크</h2>
+    <p class="muted">이 주소는 지금 한 번만 보입니다. 카카오톡으로 보내 주세요.</p>
+    <code id="shareUrl"></code>
+    <div class="row"><button class="acc" id="bShare">카카오톡 등으로 보내기</button><button id="bCopy">주소와 안내문 복사</button></div>
+  </div>
+
+  <div class="card" id="manage" hidden>
+    <h2>관리</h2>
+    <div id="devs"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="bReset">연결된 기기 초기화</button>
+      <button id="bRotate">새 주소로 다시 발급</button>
+      <button id="bRevoke">사용 중지</button>
+      <button class="danger" id="bDelete">삭제</button>
+    </div>
+    <p class="muted">새 주소로 다시 발급하면 예전 주소는 바로 못 쓰고, 연결된 기기도 초기화됩니다.</p>
+  </div>
+</section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SB_URL='https://enruijclegpmjamwmqym.supabase.co', SB_KEY='sb_publishable_oaCsqN8CoNJh0d7ZSxh9TQ_vzB9mBpV';
+const APP_URL=new URL('./',location.href).href;
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const SHORT={sb:'서울',bs:'부산',dg:'대구',ic:'인천',gj:'광주',dj:'대전',us:'울산',sj:'세종',gg:'경기',gw:'강원',cb:'충북',cn:'충남',jb:'전북',jn:'전남',gb:'경북',gn:'경남',jj:'제주'};
+const ORDER=Object.keys(SHORT);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sh=r=>r.replace(/^(대구|부산|인천|광주|대전|울산|강원|경남) /,'');
+const oname=o=>{const n=o.split(':')[1];return /교육청$/.test(n)?n:n+'교육지원청'};
+const ERR={not_admin:'관리자 권한이 없습니다.',label_required:'받는 사람을 적어 주세요.',no_region:'지역을 하나 이상 고르거나 전국을 선택해 주세요.',not_found:'링크를 찾을 수 없습니다.'};
+const msg=e=>{const m=(e&&(e.message||e.error_description))||String(e);for(const k in ERR)if(m.includes(k))return ERR[k];if(/Invalid login/i.test(m))return '이메일 또는 비밀번호가 맞지 않습니다.';return m};
+let REG=[],BY={},LINKS=[],CUR=null,SEL=new Set(),STAB='sb';
+const fmt=t=>t?new Date(t).toLocaleString('ko-KR',{year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+const fmtD=t=>t?new Date(t).toLocaleDateString('ko-KR'):'';
+async function rpc(fn,args){const {data,error}=await sb.rpc(fn,args||{});if(error)throw error;return data}
+function show(v){['vLogin','vWait','vList','vEdit'].forEach(x=>$(x).hidden=x!==v);$('logout').hidden=v==='vLogin';scrollTo(0,0)}
+
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){show('vLogin');return}
+  let ok=false;try{ok=await rpc('edu_is_admin')}catch(_){}
+  if(!ok){$('waitEm').textContent=session.user.email||'';show('vWait');return}
+  REG=await rpc('admin_regions');BY={};for(const r of REG)(BY[r.sido]??={})[r.office]=(BY[r.sido][r.office]||[]).concat(r.reg);
+  await loadList();
+}
+async function loadList(){
+  LINKS=await rpc('admin_links');renderList();show('vList');
+  rpc('admin_status').then(s=>{$('stat').textContent=`지역 ${s.regions}곳 · 마지막 동기화 ${fmt(s.last_sync)}`+(s.sync_errors?` · 오류 ${s.sync_errors}`:'')}).catch(()=>{});
+}
+function regSummary(l){
+  if(l.all)return '전국';
+  const set=new Set(l.regs),parts=[];
+  for(const s of ORDER){if(!BY[s])continue;const offs=Object.entries(BY[s]);const all=offs.flatMap(o=>o[1]);
+    if(all.every(r=>set.has(r))){parts.push(SHORT[s]+' 전체');continue}
+    for(const [o,rs] of offs){if(rs.length>1&&rs.every(r=>set.has(r)))parts.push(SHORT[s]+' '+oname(o));else rs.filter(r=>set.has(r)).forEach(r=>parts.push(SHORT[s]+' '+sh(r)))}}
+  return parts.join(', ')||'(지역 없음)';
+}
+function state(l){if(l.revoked)return '<span class="badge off">사용 중지</span>';if(l.expires_at&&new Date(l.expires_at)<new Date())return '<span class="badge off">기간 끝남</span>';return '<span class="badge ok">사용 중</span>'}
+function renderList(){
+  const q=$('q').value.trim();const L=LINKS.filter(l=>!q||l.label.includes(q));
+  $('links').innerHTML=L.length?L.map(l=>`<div class="card lk" data-id="${l.id}"><div class="t">${esc(l.label)}${state(l)}</div>
+    <div class="muted">${esc(regSummary(l))}</div>
+    <div class="muted">기기 ${l.devices.length}/${l.max_devices}대${l.expires_at?' · '+fmtD(l.expires_at)+'까지':''}${l.last_used_at?' · 최근 사용 '+fmt(l.last_used_at):' · 아직 안 열림'}</div></div>`).join('')
+    :'<p class="muted">아직 만든 링크가 없습니다.</p>';
+}
+$('links').onclick=e=>{const c=e.target.closest('.lk');if(c)openEdit(LINKS.find(l=>l.id===c.dataset.id))};
+$('q').oninput=renderList;
+
+function openEdit(l){
+  CUR=l||null;SEL=new Set(l?l.regs:[]);
+  $('eTitle').textContent=l?'링크 수정':'새 개인 링크';
+  $('fLabel').value=l?l.label:'';$('fAll').checked=!!(l&&l.all);
+  $('fDev').value=String(l?l.max_devices:2);
+  $('fExp').value=l&&l.expires_at?'d':'';$('fDate').hidden=!(l&&l.expires_at);
+  $('fDate').value=l&&l.expires_at?new Date(l.expires_at).toISOString().slice(0,10):'';
+  $('expNow').textContent='';$('eerr').textContent='';$('shareBox').hidden=true;
+  $('manage').hidden=!l;
+  if(l){$('bRevoke').textContent=l.revoked?'다시 사용':'사용 중지';
+    $('devs').innerHTML=`<div class="muted">연결된 기기 ${l.devices.length}/${l.max_devices}대</div>`+l.devices.map(d=>`<div class="dev"><span>${d.kind==='pwa'?'설치한 앱':'브라우저'} · 처음 ${fmt(d.first_seen)} · 최근 ${fmt(d.last_seen)}</span><button data-d="${d.id}" style="padding:2px 8px">해제</button></div>`).join('')}
+  const first=[...SEL][0];if(first){const r=REG.find(x=>x.reg===first);if(r)STAB=r.sido}
+  renderPicker();show('vEdit');
+}
+function renderPicker(){
+  $('picker').hidden=$('fAll').checked;
+  $('sTabs').innerHTML=ORDER.filter(s=>BY[s]).map(s=>{const n=Object.values(BY[s]).flat().filter(r=>SEL.has(r)).length;return `<button data-s="${s}" aria-pressed="${s===STAB}">${SHORT[s]}${n?`<span class="n">${n}</span>`:''}</button>`}).join('');
+  const offs=Object.entries(BY[STAB]||{});const all=offs.flatMap(o=>o[1]);
+  const allOn=all.every(r=>SEL.has(r)),allSome=!allOn&&all.some(r=>SEL.has(r));
+  const box=(attr,on,txt,sub,cls='')=>`<label class="chk ${cls} ${on?'on':''}"><input type="checkbox" ${attr} ${on?'checked':''}><span>${esc(txt)}</span>${sub?`<small>${esc(sub)}</small>`:''}</label>`;
+  let h=`<div class="pk-all">${box(`data-grp="${esc(all.join('|'))}"`,allOn,SHORT[STAB]+' 전체',all.length+'곳','inline'+(allSome?' part':''))}</div>`;
+  const multi=offs.filter(o=>o[1].length>1),single=offs.filter(o=>o[1].length===1);
+  if(multi.length){h+='<div class="gh2">여러 시군구를 맡는 교육지원청</div><div class="grid">';
+    for(const [o,rs] of multi){const on=rs.every(r=>SEL.has(r)),some=!on&&rs.some(r=>SEL.has(r));
+      h+=`<div class="og">${box(`data-grp="${esc(rs.join('|'))}"`,on,oname(o),'전체','grp'+(some?' part':''))}<div class="sub">${rs.map(r=>box(`data-r="${esc(r)}"`,SEL.has(r),sh(r))).join('')}</div></div>`}
+    h+='</div>'}
+  if(single.length){h+=`<div class="gh2">${multi.length?'시군구 하나를 맡는 교육지원청':'시군구'}</div><div class="grid">`+single.map(([o,rs])=>box(`data-r="${esc(rs[0])}"`,SEL.has(rs[0]),sh(rs[0]),rs.length&&sh(rs[0]).replace(/[시군구]$/,'')===o.split(':')[1]?'':oname(o))).join('')+'</div>'}
+  $('offs').innerHTML=h;
+  $('selSum').textContent=$('fAll').checked?'전국 전체가 열립니다.':(SEL.size?'선택: '+regSummary({regs:[...SEL]}):'아직 고른 지역이 없습니다.');
+}
+$('sTabs').onclick=e=>{const b=e.target.closest('button');if(b){STAB=b.dataset.s;renderPicker()}};
+$('offs').onchange=e=>{const t=e.target;if(t.dataset.r){t.checked?SEL.add(t.dataset.r):SEL.delete(t.dataset.r)}else if(t.dataset.grp){t.dataset.grp.split('|').forEach(r=>t.checked?SEL.add(r):SEL.delete(r))}renderPicker()};
+$('fAll').onchange=renderPicker;
+$('fExp').onchange=()=>{const v=$('fExp').value;$('fDate').hidden=v!=='d';$('expNow').textContent=v&&v!=='d'?fmtD(expiry())+'까지':''};
+function expiry(){const v=$('fExp').value;if(!v)return null;if(v==='d'){const d=$('fDate').value;return d?new Date(d+'T23:59:59+09:00'):null}const d=new Date();d.setMonth(d.getMonth()+ +v);return d}
+
+function shareText(tok){const url=APP_URL+'#k='+tok;return {url,text:`A-Atlas EduMap 전용 링크입니다.\n처음 여신 휴대폰에서만 열립니다. 다른 사람에게 전달하지 말아 주세요.\n열린 뒤 화면 안내에 따라 "홈 화면에 추가"를 해 두시면 앱처럼 쓰실 수 있습니다.\n\n${url}`}}
+let SHARE=null;
+function showShare(tok){SHARE=shareText(tok);$('shareUrl').textContent=SHARE.url;$('shareBox').hidden=false;$('shareBox').scrollIntoView({behavior:'smooth'})}
+$('bShare').onclick=async()=>{if(!SHARE)return;if(navigator.share){try{await navigator.share({title:'A-Atlas EduMap',text:SHARE.text});return}catch(e){if(e.name==='AbortError')return}}await copy()};
+async function copy(){try{await navigator.clipboard.writeText(SHARE.text);$('bCopy').textContent='복사했습니다'}catch(_){prompt('아래 내용을 복사해 주세요',SHARE.text)}setTimeout(()=>$('bCopy').textContent='주소와 안내문 복사',2000)}
+$('bCopy').onclick=copy;
+
+$('bSave').onclick=async()=>{
+  $('eerr').textContent='';$('bSave').disabled=true;
+  try{const r=await rpc('admin_save_link',{p_id:CUR?CUR.id:null,p_label:$('fLabel').value,p_regs:[...SEL],p_all:$('fAll').checked,p_max_devices:+$('fDev').value,p_expires_at:expiry(),p_revoked:CUR?CUR.revoked:false});
+    LINKS=await rpc('admin_links');const l=LINKS.find(x=>x.id===r.id);
+    if(r.token){openEdit(l);showShare(r.token)}else{openEdit(l);$('eerr').textContent='저장했습니다. 받은 사람이 앱을 다시 열면 바로 반영됩니다.'}
+  }catch(e){$('eerr').textContent=msg(e)}finally{$('bSave').disabled=false}
+};
+$('bCancel').onclick=()=>loadList().catch(e=>alert(msg(e)));
+$('bNew').onclick=()=>openEdit(null);
+async function act(fn,args,okMsg){try{const r=await rpc(fn,args);LINKS=await rpc('admin_links');const l=LINKS.find(x=>x.id===CUR.id);if(l){openEdit(l);if(r&&r.token)showShare(r.token);else if(okMsg)$('eerr').textContent=okMsg}else loadList()}catch(e){$('eerr').textContent=msg(e)}}
+$('bReset').onclick=()=>confirm('연결된 기기를 모두 해제할까요? 받은 사람이 링크를 다시 열면 새로 연결됩니다.')&&act('admin_reset_devices',{p_id:CUR.id},'기기를 초기화했습니다.');
+$('devs').onclick=e=>{const b=e.target.closest('button[data-d]');if(b&&confirm('이 기기 연결을 해제할까요?'))act('admin_reset_devices',{p_id:CUR.id,p_device:b.dataset.d},'해제했습니다.')};
+$('bRotate').onclick=()=>confirm('새 주소를 만들까요? 예전 주소는 바로 못 쓰게 됩니다.')&&act('admin_rotate_token',{p_id:CUR.id});
+$('bRevoke').onclick=()=>act('admin_save_link',{p_id:CUR.id,p_label:CUR.label,p_regs:CUR.regs,p_all:CUR.all,p_max_devices:CUR.max_devices,p_expires_at:CUR.expires_at,p_revoked:!CUR.revoked},CUR.revoked?'다시 쓸 수 있게 했습니다.':'사용을 중지했습니다.');
+$('bDelete').onclick=async()=>{if(!confirm('이 링크를 완전히 삭제할까요? 되돌릴 수 없습니다.'))return;try{await rpc('admin_delete_link',{p_id:CUR.id});await loadList()}catch(e){$('eerr').textContent=msg(e)}};
+
+$('bLogin').onclick=async()=>{$('lerr').textContent='';const {error}=await sb.auth.signInWithPassword({email:$('em').value.trim(),password:$('pw').value});if(error){$('lerr').textContent=msg(error);return}boot()};
+$('bSignup').onclick=async()=>{$('lerr').textContent='';if($('pw').value.length<8){$('lerr').textContent='비밀번호는 8자 이상으로 해 주세요.';return}
+  const {data,error}=await sb.auth.signUp({email:$('em').value.trim(),password:$('pw').value,options:{emailRedirectTo:location.href}});
+  if(error){$('lerr').textContent=msg(error);return}
+  if(data.session)boot();else $('lerr').textContent='계정을 만들었습니다. Claude에게 "관리자 계정 만들었다"고 알려 주세요. 승인 후 로그인하시면 됩니다.'};
+$('logout').onclick=async()=>{await sb.auth.signOut();show('vLogin')};
+boot().catch(e=>{show('vLogin');$('lerr').textContent=msg(e)});
+</script>
+</body>
+</html>

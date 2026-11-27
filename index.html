@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>A-Atlas EduMap</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f5d50">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A-Atlas">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+:root{--ink:#1d2a26;--muted:#5d6b66;--line:#d5dbd5;--panel:#ffffffee;--sch:#1f6f5c;--aca:#c2410c;--kyo:#6d28d9;--bnd:#2f5d50;
+--font:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif}
+html,body{height:100%;margin:0}
+body{font:14px var(--font);color:var(--ink);background:#eef1ec}
+#map{position:fixed;inset:0}
+.panel{position:fixed;z-index:10;top:calc(12px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));width:300px;max-height:calc(100% - 24px);overflow:auto;background:var(--panel);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 24px #0002}
+.ph{padding:12px 14px 8px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.ph h1{margin:0;font-size:16px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.ph h1 .rf{font-size:12px;color:var(--muted);font-weight:400;vertical-align:1px}.ph h1:active{opacity:.6}
+#rtoast{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:60;background:#12263c;color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;box-shadow:0 8px 24px #0006}
+.ph p{margin:3px 0 0;color:var(--muted);font-size:12px;white-space:nowrap}
+.order{font-size:11px;font-weight:600;color:var(--muted);padding:8px 14px 2px;border-top:1px solid var(--line)}
+.layers{display:flex;flex-direction:column;padding:2px 6px 6px}
+.ly{display:grid;grid-template-columns:16px 12px 1fr auto;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+.ly:hover{background:#0000000a}
+.ly input{margin:0;width:15px;height:15px;accent-color:var(--bnd)}
+.ly b{font-weight:600}.ly small{display:none}
+.ly .ct{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.sw{width:11px!important;height:11px!important}
+.ly .sw.sch{transform:none;display:block;gap:0}
+.sw{width:13px;height:13px;display:block}
+.sw.sch{background:var(--sch);border-radius:3px}.sw.aca{background:var(--aca);border-radius:50%}
+.sw.kyo{background:var(--kyo);transform:rotate(45deg) scale(.8);border-radius:2px}.sw.base{border:3px dashed #e6007e;border-radius:3px;box-shadow:0 0 0 1px #fff}
+.basesel{display:flex;gap:4px}
+.lvsel{display:flex;justify-content:flex-end;gap:5px;padding:0 8px 6px}
+.lvsel button{all:unset;cursor:pointer;font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.lvsel button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.basesel button{font:inherit;font-size:11px;padding:2px 7px;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;color:var(--ink)}
+.basesel button[aria-pressed="true"]{border-color:var(--bnd);color:var(--bnd);font-weight:700}
+.search{padding:8px 14px 10px;border-top:1px solid var(--line)}
+.qrow{display:flex;gap:6px;align-items:center}.qrow button,.rsgo{all:unset;cursor:pointer;flex:none;height:26px;padding:0 11px;border-radius:13px;background:#12263c;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;box-shadow:0 1px 3px #12263c40}.qrow button:active,.rsgo:active{background:#1f3a5a}
+.search input{box-sizing:border-box;width:100%;min-width:0;flex:1;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:7px}
+.qact{margin-top:6px}.qact button{all:unset;cursor:pointer;box-sizing:border-box;width:100%;text-align:center;padding:7px 10px;border-radius:7px;background:#12263c;color:#fff;font-size:13px;font-weight:700}.qact button.on{background:#fff;color:#12263c;border:1px solid #12263c}
+#fqchip{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:40;background:#12263c;color:#fff;border-radius:16px;padding:7px 8px 7px 14px;font-size:13px;box-shadow:0 4px 14px #0005;max-width:calc(100vw - 32px)}#fqchip .r1{display:flex;gap:8px;align-items:center;justify-content:space-between}#fqchip .r2{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12px;color:#ffffffcc}#fqchip .r2 button{background:#f2aa4c;color:#12263c;padding:2px 9px}
+.sumb{background:#12263cee;color:#fff;border-radius:9px;padding:2px 7px;font-size:11px;line-height:1.3;white-space:nowrap;text-align:center;cursor:pointer;box-shadow:0 1px 5px #0005;border:1.5px solid #fff}.sumb b{font-size:12px}.sumb span{color:#ffcf9e;font-weight:700}
+.rm{position:relative;cursor:pointer}.rm i{display:block;width:11px;height:11px;border-radius:50%;background:#c2410c;border:2px solid #fff;box-shadow:0 0 0 2px #12263c}.rm.k i{background:#6d28d9}.rm.s i{background:#1f6f5c;border-radius:2px}.rm em{position:absolute;left:16px;top:-3px;white-space:nowrap;font-style:normal;font-size:11px;font-weight:700;background:#fff;border:1px solid #12263c;border-radius:4px;padding:0 4px;color:#12263c}.rm.nolabel em{display:none}.rmh{font-size:11px;color:var(--muted);padding:6px 8px 2px;border-top:1px solid var(--line);margin-top:4px}#fqchip[hidden]{display:none}#fqchip b{color:#f2aa4c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#fqchip button{all:unset;cursor:pointer;background:#ffffff26;border-radius:14px;padding:2px 10px;font-weight:700;flex:none}
+#results{display:flex;flex-direction:column;max-height:170px;overflow:auto;margin-top:4px}
+#results button{all:unset;cursor:pointer;padding:5px 8px;border-radius:6px;font-size:13px}
+#results button:hover{background:#0000000d}#results small{color:var(--muted)}
+.note{padding:8px 14px 10px;border-top:1px solid var(--line);color:#8a958f;font-size:9.5px;line-height:1.45}
+.toggle{all:unset;cursor:pointer;color:var(--ink);font-size:13px;font-weight:600;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;flex:none}
+.panel.min .order,.panel.min .layers,.panel.min .search,.panel.min .note{display:none}
+@media (max-width:640px){
+ .panel{left:calc(8px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));width:min(322px,calc(100vw - 60px));max-height:calc(100% - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+ #fqchip{top:auto;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+ .panel{overflow-x:hidden}.ph{padding:10px 10px 8px;gap:6px}.ph h1{font-size:15px}.ph p{font-size:11px}.inst{font-size:12px;padding:5px 8px;margin-right:4px}.hidep{margin-right:4px}.toggle{padding:5px 8px}
+}
+.cats{padding:8px 14px 10px;border-top:1px solid var(--line)}
+.cats .t{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between}
+.cats .t button{all:unset;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;text-decoration:underline}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chips button{all:unset;cursor:pointer;font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.chips button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chips button small{opacity:.75;margin-left:3px}
+.panel.min .cats{display:none}
+.pop .gt{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px;font-variant-numeric:tabular-nums}.pop .gt th,.pop .gt td{padding:2px 6px;border-bottom:1px solid var(--line);text-align:right}.pop .gt th:first-child,.pop .gt td:first-child{text-align:left}.pop .gt th{color:var(--muted);font-weight:600}
+.pop .src{margin:6px 0 0;font-size:11px;color:var(--muted)}
+/* map overlays */
+.grp{transform:translate(-50%,-50%);min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:11px;border:2px solid #fff;box-shadow:0 1px 4px #0006;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:800;cursor:pointer;font-variant-numeric:tabular-nums}
+.grp.a{background:var(--aca)}.grp.k{background:var(--kyo)}.grp.m{background:linear-gradient(135deg,var(--aca) 50%,var(--kyo) 50%)}
+.pop .gl{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.pop .gl li{border-bottom:1px solid var(--line)}
+.pop .gl button{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:6px;padding:5px 2px;cursor:pointer;font-size:12.5px}
+.pop .gl button:hover{background:#0000000a}
+.pop .gl small{margin-left:auto;color:var(--muted);font-size:11px;white-space:nowrap;padding-left:6px}
+.pop .gl i{flex:none;width:8px;height:8px;border-radius:50%}.pop .gl i.a{background:var(--aca)}.pop .gl i.k{background:var(--kyo);border-radius:1px;transform:rotate(45deg)}
+.pop .gl button.on{font-weight:700;color:var(--bnd)}
+.pop .gd{padding:2px 4px 8px 14px;font-size:12px}.pop .gd dl{margin:0}
+.pop .back{all:unset;cursor:pointer;font-size:12px;color:var(--bnd);font-weight:700;display:block;margin:0 0 4px}
+.ac{position:relative;width:28px;height:28px;transform:translate(-50%,-50%);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dot{position:absolute;left:8px;top:8px;width:12px;height:12px;border-radius:50%;background:var(--aca);border:1.5px solid #fff;box-shadow:0 1px 3px #0005;box-sizing:border-box}
+.ac.kyo .dot{left:9px;top:9px;width:10px;height:10px;border-radius:2px;background:var(--kyo);transform:rotate(45deg)}
+.ac em{position:absolute;left:24px;top:50%;transform:translateY(-50%);font-style:normal;white-space:nowrap;background:#fffffff0;border:1px solid var(--aca);border-radius:4px;padding:0 4px;font-size:11px;font-weight:600;color:var(--ink);box-shadow:0 1px 2px #0002;pointer-events:none}
+.ac.kyo em{border-color:var(--kyo)}
+.ac.nolabel em{display:none}
+.ac em.mv{transform:none}
+.sch{display:flex;align-items:center;gap:4px;transform:translate(-7px,-50%);cursor:pointer;white-space:nowrap}
+.sch i{width:13px;height:13px;border-radius:3px;background:var(--sch);border:2px solid #fff;box-shadow:0 1px 3px #0005;flex:none}
+.sch span{background:#fff;border:1px solid var(--sch);border-radius:4px;padding:1px 5px;font-size:11.5px;font-weight:600;color:var(--ink);box-shadow:0 1px 3px #0002}
+.sch span small{font-size:9.5px;font-weight:500;color:var(--muted)}
+.sch.nolabel span{display:none}
+.pop{position:relative;bottom:14px;white-space:normal;overflow-x:hidden;max-height:min(440px,62vh);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px #0003;padding:10px 12px;width:min(300px,calc(100vw - 32px));box-sizing:border-box;font-size:13px;line-height:1.5}
+.pop h3{margin:0 0 2px;font-size:15px}
+.pop .lks{display:flex;flex-wrap:wrap;gap:4px}.pop .lkb{display:inline-block;font-size:12px;font-weight:700;color:#12263c;border:1px solid #c9d3de;border-radius:999px;padding:1px 8px;text-decoration:none;background:#f3f6f9}.pop .rbx summary{cursor:pointer;font-size:12px;color:var(--muted)}.pop .rbx ul{margin:4px 0;padding-left:16px;font-size:12px}.pop .rbx small{font-size:10.5px;color:var(--muted)}
+.pop .tag{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:999px;padding:1px 7px;margin-bottom:4px}
+.pop dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;margin:4px 0 0}.pop dt{color:var(--muted);white-space:nowrap}.pop dd{margin:0;min-width:0;overflow-wrap:anywhere;word-break:break-word}.pop dd.ad{font-size:12px;line-height:1.4;color:#444}.pop h3{overflow-wrap:anywhere}
+.pop .x{position:absolute;top:4px;right:8px;cursor:pointer;color:var(--muted);font-size:16px;background:none;border:0}
+#err{position:fixed;inset:0;display:none;place-items:center;z-index:20;background:#eef1ec;padding:24px;text-align:center;color:var(--muted)}
+.mode{display:flex;gap:4px;margin:10px 12px 0;padding:3px;background:#eef1ec;border-radius:9px}
+.mode button{flex:1;font:inherit;font-size:13px;font-weight:700;padding:7px 0;border:0;border-radius:7px;background:transparent;color:var(--muted);cursor:pointer}
+.mode button[aria-pressed=true]{background:#fff;color:var(--bnd);box-shadow:0 1px 3px #0002}
+.current{display:flex;align-items:center;gap:7px;margin:8px 12px 0;padding:8px 9px;background:#edf3ee;border-left:3px solid var(--bnd);border-radius:5px;min-width:0}
+.current small{flex:none;font-size:11px;color:var(--muted)}.current strong{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rp{padding:8px 12px 10px}
+.rsw{display:flex;gap:6px;align-items:center}.rsw .rs{flex:1;min-width:0}
+.rs{position:relative}.rs input{box-sizing:border-box;width:100%;height:36px;font:inherit;font-size:13px;padding:7px 34px 7px 10px;border:1px solid #a9bdb1;border-radius:8px}
+.rs button{position:absolute;right:0;top:0;width:36px;height:36px;border:0;background:none;font-size:17px;color:var(--muted);cursor:pointer}
+.tabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px;margin:7px 0}.tabs button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 2px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap}
+.tabs button[aria-pressed=true]{background:var(--bnd);border-color:var(--bnd);color:#fff}
+.hint{margin:0 0 6px;font-size:11px;color:var(--muted)}
+.list{position:relative;max-height:240px;overflow-y:auto;overscroll-behavior:contain;padding-right:2px;scrollbar-width:thin}
+.list .row{display:block;width:100%;box-sizing:border-box;text-align:left;font:inherit;padding:6px 10px;margin-bottom:4px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);cursor:pointer}
+.list .row:hover{background:#eef4ef;border-color:#9eb5a8}
+.list .row strong{display:block;font-size:13px}.list .row small{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+.list .row[aria-pressed=true]{background:var(--bnd);border-color:var(--bnd);color:#fff}.list .row[aria-pressed=true] small{color:#ffffffcc}
+.list details{border-bottom:1px solid var(--line);margin-bottom:4px}.list details[open]{background:#f7f9f6;border-radius:8px}
+.list summary{list-style:none;cursor:pointer;position:relative;padding:7px 30px 7px 9px}.list summary::-webkit-details-marker{display:none}
+.list summary:after{content:'';position:absolute;right:13px;top:14px;width:7px;height:7px;border-right:2px solid #69776e;border-bottom:2px solid #69776e;transform:rotate(45deg)}
+.list details[open]>summary:after{top:18px;transform:rotate(-135deg)}
+.list summary strong{display:block;font-size:13px}.list summary small{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+.list details .in{padding:0 6px 6px}
+.list .sp{border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:6px}
+.list .gh{font-size:11px;font-weight:700;color:var(--muted);margin:6px 2px 4px}
+.list .empty{padding:16px 8px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6}
+.zi{padding:2px 12px 10px;border-top:1px solid var(--line)}
+.zi h2{font-size:13px;margin:10px 0 6px;display:flex;justify-content:space-between;align-items:baseline}.zi h2 small{font-weight:500;color:var(--muted);font-size:11px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.tiles span{background:#f7f8f5;border-radius:6px;padding:5px 2px;text-align:center;font-size:10.5px;color:var(--muted)}.tiles b{display:block;font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums}
+.cbar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:2px 0 4px}.cleg{display:flex;flex-wrap:wrap;gap:2px 9px;font-size:11px;color:var(--muted)}.cleg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px}
+.zt{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}.zt td,.zt th{padding:2px 4px;border-bottom:1px solid var(--line);text-align:right}.zt td:first-child,.zt th:first-child{text-align:left}.zt th{color:var(--muted);font-weight:600}
+.rsel{display:flex;gap:3px}.rsel button{font:inherit;font-size:11px;padding:1px 7px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);cursor:pointer}.rsel button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.yrs{display:flex;align-items:flex-end;gap:2px;height:54px;margin-top:4px}.yrs div{flex:1;background:#c2410c99;border-radius:2px 2px 0 0;min-height:1px;position:relative}.yrs div:hover{background:var(--aca)}
+.yax{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+.zi ol{margin:0;padding-left:18px;font-size:12px}.zi ol li{margin:1px 0}.zi ol small{color:var(--muted)}
+.zi .src{font-size:10.5px;color:var(--muted);margin:6px 0 0;line-height:1.5}
+.ac.dim,.grp.dim{opacity:.35}
+.panel.min .rp,.panel.min .zi,.panel.min .mode{display:none}
+.inst{all:unset;cursor:pointer;font-size:13px;font-weight:700;padding:6px 10px;border-radius:8px;background:#12263c;color:#fff;flex:none;margin-right:6px}
+.inst[hidden]{display:none}
+.ihelp{position:fixed;left:12px;right:12px;bottom:16px;z-index:50;background:#12263c;color:#fff;border-radius:14px;padding:14px 16px;font-size:14px;line-height:1.6;box-shadow:0 8px 24px #0006}
+.ihelp b{color:#f2aa4c}.ihelp button{all:unset;cursor:pointer;float:right;font-weight:700;padding:0 4px}
+.panel{transition:transform .25s ease,opacity .25s;touch-action:pan-y}.panel.drag{transition:none}.panel.away{transform:translateX(calc(-100% - 30px));opacity:0;pointer-events:none}
+#ptab{all:unset;cursor:pointer;position:fixed;z-index:12;left:0;top:calc(32% - 32px);width:26px;height:64px;border-radius:0 12px 12px 0;background:#12263c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:2px 2px 10px #0004;touch-action:none}
+#ptab[hidden]{display:none}.hidep{all:unset;cursor:pointer;font-size:15px;font-weight:700;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-right:6px;flex:none;color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="err"></div>
+<aside class="panel" id="panel">
+  <div class="ph"><div><div style="display:flex;align-items:center"><h1 id="ttl" title="눌러서 최신 버전으로 새로고침" role="button" tabindex="0">A-Atlas EduMap <span class="rf" aria-hidden="true">↻</span></h1><a id="admgo" href="admin.html" hidden title="관리자" aria-label="관리자" style="margin-left:6px;font-size:14px;text-decoration:none;color:var(--muted)">⚙</a></div><p id="sub">학교·학원·교습소 · 2026.11 기준</p></div><div style="display:flex"><button class="inst" id="inst" hidden>앱 설치</button><button class="hidep" id="hidep" title="메뉴 왼쪽으로 치우기" aria-label="메뉴 치우기">‹</button><button class="toggle" id="tg">접기</button></div></div>
+  <div class="mode" role="group" aria-label="보기 방식"><button data-m="reg" aria-pressed="true">지역별</button><button data-m="zone" aria-pressed="false">학원가</button></div>
+  <div class="current" aria-live="polite"><small id="curK">현재 지역</small><strong id="curName"></strong></div>
+  <div class="rp" id="rp">
+    <div class="rsw"><div class="rs"><input id="rq" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="교육지원청·시군구 검색" aria-label="지역 검색"><button id="rqx" aria-label="검색어 지우기" hidden>×</button></div><button class="rsgo" id="rqgo" type="button">검색</button></div>
+    <div class="tabs" id="tabs" role="group" aria-label="시도"></div>
+    <p class="hint" id="hint" role="status"></p>
+    <div class="list" id="list" aria-label="지역 목록"></div>
+  </div>
+  <div class="zi" id="zi" hidden></div>
+  <div class="order">레이어</div>
+  <div class="layers">
+    <label class="ly"><input type="checkbox" id="L-kyo" checked><span class="sw kyo"></span><span><b>교습소</b></span><span class="ct" id="c-kyo"></span></label>
+    <label class="ly"><input type="checkbox" id="L-aca" checked><span class="sw aca"></span><span><b>학원</b></span><span class="ct" id="c-aca"></span></label>
+    <label class="ly"><input type="checkbox" id="L-sch" checked><span class="sw sch"></span><span><b>학교</b></span><span class="ct" id="c-sch"></span></label>
+    <div class="lvsel" id="lvsel"><button data-l="초" aria-pressed="true">초등학교</button><button data-l="중" aria-pressed="true">중학교</button><button data-l="고" aria-pressed="true">고등학교</button></div>
+    <div class="ly" style="cursor:default"><input type="checkbox" id="L-bnd" checked><span class="sw base"></span><span><b>경계선</b></span><span class="basesel"><button data-b="road" aria-pressed="true">일반</button><button data-b="sky" aria-pressed="false">스카이뷰</button></span></div>
+  </div>
+  <div class="cats"><div class="t"><span>학원·교습소 분야</span><button id="catAll">전체</button></div><div class="chips" id="chips"></div></div>
+  <div class="search"><div class="qrow"><input id="q" type="search" enterkeyhint="search" placeholder="이름 또는 전화번호(끝 4자리) 검색 (전국)" autocomplete="off"><button id="qgo" aria-label="검색">검색</button></div><div class="qact" id="qact" hidden><button id="qshow"></button></div><div id="results"></div></div>
+  <div class="note">출처: 나이스 학원·교습소 정보(개원한 곳만), 나이스 학교 기본정보(전화번호), 학교알리미 2026 공시(학년별 학생·반·성별, 교원 수), 행정안전부 도로명주소 위치정보(위치, 2026년 10월), 학교 부지 중심 © OpenStreetMap 기여자(ODbL), 통계청 행정경계. 위치는 주소로 찾은 값이라 실제와 조금 다를 수 있습니다.</div>
+</aside>
+<button id="ptab" hidden aria-label="메뉴 다시 보기" title="메뉴 다시 보기">›</button>
+<div id="fqchip" hidden><div class="r1"><span>검색 결과만 · <b id="fqtxt"></b></span><button id="fqx">해제</button></div><div class="r2" id="fqot" hidden></div></div>
+<script src="acc.js?v=2"></script>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=ac4908c32fc80026dd5ea1a9c5982527&libraries=services&autoload=false"></script>
+<script>
+(function(){
+const err=document.getElementById('err');
+if(!window.kakao||!kakao.maps){err.style.display='grid';err.textContent='카카오 지도를 불러오지 못했습니다. 이 주소가 카카오 앱의 사이트 도메인에 등록되어 있는지 확인해 주세요.';return}
+kakao.maps.load(()=>ACC.ready.then(init));
+function init(){
+const map=new kakao.maps.Map(document.getElementById('map'),{center:new kakao.maps.LatLng(36.82,128.62),level:6});
+map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const gc=new kakao.maps.services.Geocoder();const CACHE={};try{localStorage.removeItem('geo1')}catch(e){}
+const roadPart=a=>{a=String(a).replace(/(로|길)\s+(\d+(?:번)?길)/,'$1$2');const m=a.match(/^(.*?(?:로|길)(?:\d+번길)?\s+\d+(?:-\d+)?)/);return m?m[1]:a};
+const ps=new kakao.maps.services.Places();
+function placeOne(name,area){const q='P:'+area+' '+name;return new Promise(res=>{if(CACHE[q]!==undefined)return res(CACHE[q]);ps.keywordSearch(area+' '+name,(r,st)=>{const hit=st===kakao.maps.services.Status.OK&&r.find(x=>(x.address_name||'').includes(area));const v=hit?[+hit.y,+hit.x]:null;CACHE[q]=v;res(v)})})}
+function geocodeOne(q){return new Promise(res=>{if(CACHE[q]!==undefined)return res(CACHE[q]);gc.addressSearch(q,(r,st)=>{const v=st===kakao.maps.services.Status.OK&&r[0]?[+r[0].y,+r[0].x]:null;CACHE[q]=v;res(v)})})}
+async function geocodeAll(d,pre){if(d._done)return;const items=[...d.aca,...d.sch];const msg=document.getElementById('err');let n=0;
+  const todo=items.filter(it=>!it.ll);for(let i=0;i<todo.length;i+=8){await Promise.all(todo.slice(i,i+8).map(async it=>{let v=await geocodeOne(roadPart(/^(경|서울)/.test(it.a)?it.a:pre+it.a));if(!v&&!it.ll){const area=(it.a.match(/(\S+[시군구])\s/)||[])[1]||'';if(area)v=await placeOne(it.n,area)}if(v){it.ll=v;it.kk=1}}));n+=8;
+   if(todo.length>40){msg.style.display='grid';msg.style.background='#eef1ecdd';msg.textContent='위치를 찾는 중… '+Math.min(n,todo.length)+' / '+todo.length}}
+  msg.style.display='none';d._done=1}
+let cur=null,layers={sch:[],aca:[],kyo:[]},bndPoly=[],pop=null,DATA={};
+const LL=a=>new kakao.maps.LatLng(a[0],a[1]);
+function closePop(){if(pop){pop.setMap(null);pop=null}}
+function openPop(ll,html,list){closePop();const el=document.createElement('div');el.className='pop';el.innerHTML='<button class="x" aria-label="닫기">×</button>'+html;tap(el.querySelector('.x'),closePop);el.querySelectorAll('.rmgo').forEach(b=>tap(b,()=>goRegion(b.dataset.r)));['mousedown','touchstart','pointerdown','wheel','dblclick'].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation(),{passive:true}));pop=new kakao.maps.CustomOverlay({position:ll,content:el,yAnchor:1,zIndex:50});pop.setMap(map);if(list)bindGroup(el,list);requestAnimationFrame(()=>fitPop(ll,el))}
+function fitPop(ll,el){const pt=map.getProjection().containerPointFromCoords(ll);const box=document.getElementById('map');const W=box.clientWidth,H=box.clientHeight;const pr=document.getElementById('panel').getBoundingClientRect();const ph=el.offsetHeight+20,pw=el.offsetWidth/2+10;
+ let tx=pt.x,ty=pt.y;
+ if(W>640){const L=pr.right+8;if(pt.x-pw<L)tx=Math.min(W-pw-8,L+pw);if(pt.x+pw>W-50)tx=W-50-pw;if(pt.y-ph<8)ty=ph+8;if(pt.y>H-20)ty=H-20}
+ else{const B=pr.top-8;if(pt.x-pw<8)tx=pw+8;if(pt.x+pw>W-8)tx=W-8-pw;if(pt.y-ph<8)ty=ph+8;if(pt.y>B)ty=Math.max(ph+8,B)}
+ if(tx!==pt.x||ty!==pt.y)map.panBy(pt.x-tx,pt.y-ty)}
+const CATS=['보습·입시','외국어','음악','미술','무용·댄스','코딩·컴퓨터','독서실','직업·성인','기타','미기재'];
+function cat(f){f=f||'';if(!f.trim())return '미기재';
+ if(/독서실/.test(f))return '독서실';
+ if(/보습|입시|보통교과|진학|종합/.test(f))return '보습·입시';
+ if(/외국어|국제화/.test(f))return '외국어';
+ if(/음악/.test(f))return '음악';
+ if(/미술|만화|공예|서예/.test(f))return '미술';
+ if(/무용|기타\(소\)/.test(f))return '무용·댄스';
+ if(/정보교과|로봇|컴퓨터/.test(f))return '코딩·컴퓨터';
+ if(/식음료|미용|간호|고시|경리|의복|산업/.test(f))return '직업·성인';
+ return '기타'}
+let SEL=new Set();const LV=new Set(['초','중','고']);
+let popAt=0;
+function tap(el,fn){let sx,sy;const go=e=>{e.stopPropagation();popAt=Date.now();fn()};el.addEventListener('click',go);el.addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY},{passive:true});el.addEventListener('touchend',e=>{const t=e.changedTouches[0];if(Math.abs(t.clientX-sx)<10&&Math.abs(t.clientY-sy)<10){e.preventDefault();go(e)}});['mousedown','touchstart'].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation(),{passive:true}))}
+kakao.maps.event.addListener(map,'click',()=>{if(Date.now()-popAt>400)closePop()});
+function feeHtml(f){return f.split(/,\s*/).map(x=>{const m=x.match(/^(.*?)\s*:\s*(\d+)\s*$/);return m?`${esc(m[1].trim())} <b>${(+m[2]).toLocaleString()}원</b>`:esc(x.trim())}).filter(Boolean).join('<br>')}
+const fShort=r=>r.f?(r.f.length>6?cat(r.f):r.f):'';
+function popAca(r){const c=r.k==='학원'?'var(--aca)':'var(--kyo)';return `<span class="tag" style="background:${c}">${esc(r.k)}</span><h3>${esc(r.n)}${fShort(r)?`<small style="font-weight:600;color:var(--muted)"> (${esc(fShort(r))})</small>`:""}</h3><dl><dt>주소</dt><dd class="ad">${esc(r.a)}</dd><dt>분야</dt><dd>${r.f?esc(r.f):'미기재'}</dd>${r.tel?`<dt>전화</dt><dd><a href="tel:${esc(r.tel.replace(/[^0-9+]/g,''))}">${esc(r.tel)}</a></dd>`:''}${r.fee&&r.fee.trim()?`<dt>${r.k==='교습소'?'교습비':'수강료'}<br><small>(월, 1인)</small></dt><dd>${feeHtml(r.fee)}</dd>`:''}${lkHtml(r)}</dl>`}
+const LKR={'노원구': '202611270438', '강남구': '202611270614', '양천구': '202611270438', '서초구': '202611270614', '송파구': '202611270548', '강동구': '202611270548', '광진구': '202611270548', '강서구': '202611270647'};const LKT={home:'홈페이지',hq:'본사 홈페이지',blog:'블로그',cafe:'카페',insta:'인스타그램',youtube:'유튜브',band:'밴드'};
+function mergeLk(d,j){if(j&&j.items){const m=new Map((d.aca||[]).map(x=>[x.n+'|'+x.a,x]));for(const e of j.items){const x=m.get(e.n+'|'+e.a);if(x){x.lk=e.lk;x.rb=e.rb;x.al=e.alias}}}return d}
+async function addLk(r,d){if(!LKR[r])return d;try{mergeLk(d,await fetch('links/'+encodeURIComponent(r)+'.json?v='+LKR[r]).then(x=>x.json()))}catch(_){}return d}
+function getData(r){return ACC.on()?ACC.region(r).then(x=>{if(!x)throw new Error('no data');return mergeLk(tagD(r,x.data),x.links)}):fetch('data_'+encodeURIComponent(r)+'.json?v=20261127s',{cache:'no-cache'}).then(x=>x.json()).then(d=>tagD(r,d)).then(d=>addLk(r,d))}
+function safeU(u){return /^https?:\/\//.test(u)?u:''}
+function lkHtml(r){if(!r.lk&&!r.rb&&!r.al)return '';const cnt={};const off=(r.lk||[]).filter(l=>safeU(l.u)).map(l=>{cnt[l.t]=(cnt[l.t]||0)+1;return l}).map((l,i,a)=>{const same=a.filter(y=>y.t===l.t);const lab=(LKT[l.t]||'링크')+(same.length>1?(same.indexOf(l)+1):'');return `<a class="lkb" href="${esc(l.u)}" target="_blank" rel="noopener noreferrer">${esc(lab)} ↗</a>`}).join('');
+ const rb=(r.rb||[]).filter(safeU);const rel=rb.length?`<details class="rbx"><summary>관련 블로그 글 ${rb.length}건</summary><ul>${rb.map(u=>`<li><a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u.replace(/^https?:\/\/(m\.)?blog\.naver\.com\//,'').replace(/\/(\d+)$/,' · 글 $1'))}</a></li>`).join('')}</ul><small>학원이 아닌 다른 사람·업체가 쓴 글일 수 있습니다.</small></details>`:'';
+ return (r.al?`<dt>간판명</dt><dd>${esc(r.al)}</dd>`:'')+(off?`<dt>링크</dt><dd class="lks">${off}</dd>`:'')+(rel?`<dt></dt><dd>${rel}</dd>`:'')}
+function acaDetail(r){return `<dl><dt>주소</dt><dd class="ad">${esc(r.a)}</dd><dt>분야</dt><dd>${r.f?esc(r.f):'미기재'}</dd>${r.tel?`<dt>전화</dt><dd><a href="tel:${esc(r.tel.replace(/[^0-9+]/g,''))}">${esc(r.tel)}</a></dd>`:''}${r.fee&&r.fee.trim()?`<dt>${r.k==='교습소'?'교습비':'수강료'}<br><small>(월, 1인)</small></dt><dd>${feeHtml(r.fee)}</dd>`:''}${lkHtml(r)}</dl>`}
+function gradeTbl(g){const mw=g[0].length>2;return `<table class="gt"><thead><tr><th>학년</th><th>반</th><th>학생</th>${mw?'<th>남</th><th>여</th>':''}</tr></thead><tbody>${g.map((x,i)=>x[0]||x[1]?`<tr><td>${i+1}학년</td><td>${x[1]}</td><td>${x[0]}</td>${mw?`<td>${x[2]}</td><td>${x[3]}</td>`:''}</tr>`:'').join('')}</tbody></table>`}
+function popSch(s){return `<span class="tag" style="background:var(--sch)">${s.lv==='초'?'초등학교':s.lv==='중'?'중학교':'고등학교'}</span><h3>${esc(s.n)}</h3><dl><dt>재학생</dt><dd><b>${s.s.toLocaleString()}명</b>${s.g?` · ${s.g.reduce((x,y)=>x+y[1],0)}개 반`:''}</dd>${s.t?`<dt>교원</dt><dd>${s.t}명</dd>`:''}<dt>주소</dt><dd class="ad">${esc(s.a)}</dd>${s.tel?`<dt>전화</dt><dd><a href="tel:${esc(s.tel)}">${esc(s.tel)}</a></dd>`:''}</dl>${s.g?gradeTbl(s.g):''}<p class="src">학교알리미 2026 공시 기준</p>`}
+let GRP=[];let FQ=null;function clear(){FQ=null;if(typeof clearRM==='function')clearRM();if(typeof updFQ==='function')updFQ();layers.sch.forEach(o=>o.setMap(null));GRP.forEach(o=>o.setMap(null));GRP=[];layers={sch:[],aca:[],kyo:[]};bndPoly.forEach(x=>x.setMap(null));closePop()}
+let LT=0,ZIN=null;
+function pip(ring,p){let c=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[0]>p[0])!==(b[0]>p[0])&&p[1]<(b[1]-a[1])*(p[0]-a[0])/(b[0]-a[0])+a[1])c=!c}return c}
+async function load(region){const tok=++LT;
+  if(region.startsWith('전체:')||(region.includes(':')&&!region.startsWith('학원가:')&&(GRPS[region]||[]).length>1))return loadRoam(region,tok);roamOff();
+  const z=region.startsWith('학원가:')?ZONES.find(x=>'학원가:'+x.name===region):null;
+  const parts=(z?z.regs:GRPS[region]||(R2A[region]?[region]:['영주시'])).filter(r=>!ACC.on()||R2A[r]);
+  for(const r of parts){if(!DATA[r])DATA[r]=await getData(r);await geocodeAll(DATA[r],AREAS[(R2A[r]||{a:'gb'}).a].pre)}
+  if(tok!==LT)return;
+  const ds=parts.map(r=>DATA[r]);let d=ds.length===1?ds[0]:{aca:ds.flatMap(x=>x.aca),sch:ds.flatMap(x=>x.sch),bnd:[]};
+  if(z){const in4=x=>x.ll&&pip(z.ring4,x.ll);d={aca:d.aca.filter(in4),sch:d.sch.filter(in4),bnd:[],focus:(z.fit?z.fit.map(i=>z.bnd[i]):z.bnd).flat()};ZIN=r=>z.bnd.some(g=>pip(g,r.ll))}else{ZIN=null;zi.hidden=true}
+  if(region==='도청신도시'){const inBox=x=>x.ll&&x.ll[0]>36.562&&x.ll[0]<36.597&&x.ll[1]>128.462&&x.ll[1]<128.525;d.aca=d.aca.filter(inBox);d.sch=d.sch.filter(inBox);d.focus=[[36.566,128.468],[36.594,128.515]]}
+  clear();cur=d;
+  bndPoly=z?[...z.bnd.flatMap(rg=>{const path=rg.map(LL);return [new kakao.maps.Polygon({path,strokeWeight:7,strokeColor:'#ffffff',strokeOpacity:.85,fillColor:'#e6007e',fillOpacity:.09,zIndex:1}),new kakao.maps.Polyline({path,strokeWeight:3,strokeColor:'#e6007e',strokeOpacity:1,zIndex:2})]}),new kakao.maps.Polyline({path:z.ring4.map(LL),strokeWeight:2,strokeColor:'#2f5d50',strokeOpacity:.7,strokeStyle:'dash',zIndex:1})]:ds.flatMap(x=>x.bnd).flatMap(rg=>{const path=rg.map(LL);return [new kakao.maps.Polyline({path,strokeWeight:8,strokeColor:'#ffffff',strokeOpacity:.85,zIndex:1}),new kakao.maps.Polyline({path,strokeWeight:4,strokeColor:'#e6007e',strokeOpacity:1,strokeStyle:'shortdash',zIndex:2})]});
+  d.sch.forEach(s=>{if(!s.ll)return;const el=document.createElement('div');el.className='sch';el.innerHTML=`<i></i><span>${esc(s.n.replace(/초등학교$/,'초').replace(/중학교$/,'중').replace(/고등학교$/,'고'))} <small>(${s.s.toLocaleString()}명)</small></span>`;const ll=LL(s.ll);tap(el,()=>openPop(ll,popSch(s)));const o=new kakao.maps.CustomOverlay({position:ll,content:el,xAnchor:0,yAnchor:.5,zIndex:10});o.el=el;o.rec=s;layers.sch.push(o)});
+  d.aca.forEach(r=>{if(!r.ll)return;const o={rec:r,getPosition:()=>LL(r.ll),setMap(){}};(r.k==='학원'?layers.aca:layers.kyo).push(o)});
+  document.getElementById('c-aca').textContent=layers.aca.length+'곳';
+  document.getElementById('c-kyo').textContent=layers.kyo.length+'곳';
+  buildChips(d);
+  document.getElementById('c-sch').textContent=layers.sch.length+'개교 · 재학생 '+d.sch.reduce((a,s)=>a+s.s,0).toLocaleString()+'명';
+  apply();
+  const b=new kakao.maps.LatLngBounds();(d.focus||ds.flatMap(x=>x.bnd).flat()).forEach(p=>b.extend(LL(p)));map.setBounds(b);if(z)showZone(z);
+}
+
+// ---- 시도 전체 보기: 멀리서는 시군구별 숫자, 확대하면 화면 안 지역 자료를 불러와 표시 ----
+let ROAM=null;const ROAM_LV=6,KYO_LV=4; // 7 이상: 숫자, 5~6: 학원·학교, 4 이하: 교습소까지
+function roamOff(){if(!ROAM)return;ROAM.bub.forEach(o=>o.setMap(null));ROAM.zl.forEach(o=>o.setMap(null));ROAM=null}
+async function loadRoam(region,tok){const whole=region.startsWith('전체:'),a=whole?region.slice(3):region.split(':')[0];if(!AREAS[a])return;
+  const idx=await loadIdx();if(tok!==LT)return;roamOff();clear();ZIN=null;zi.hidden=true;cur={aca:[],sch:[],bnd:[]};
+  const regs=whole?AREAS[a].g.flatMap(g=>g[1]):GRPS[region],sum={};regs.forEach(r=>sum[r]={aca:0,kyo:0,sch:0,la:0,lo:0,n:0,box:[90,180,-90,-180]});
+  if(idx)idx.rows.forEach(w=>{const r=idx.regs[w[2]],S=sum[r];if(!S)return;const la=w[3]/1e4,lo=w[4]/1e4;S[['sch','aca','kyo'][w[1]]]++;if(!(la>32&&la<39&&lo>124&&lo<132))return;S.la+=la;S.lo+=lo;S.n++;
+    const B=S.box;if(la<B[0])B[0]=la;if(lo<B[1])B[1]=lo;if(la>B[2])B[2]=la;if(lo>B[3])B[3]=lo});
+  ROAM={a,sum,bub:[],zl:[],shown:''};
+  for(const [r,S] of Object.entries(sum)){if(!S.n)continue;const el=document.createElement('div');el.className='sumb';
+    el.innerHTML=`<b>${esc(sh(r))}</b> <span>${(S.aca+S.kyo).toLocaleString()}</span>`;el.title=`${sh(r)} · 학원 ${S.aca.toLocaleString()} · 교습소 ${S.kyo.toLocaleString()} · 학교 ${S.sch.toLocaleString()} (누르면 확대)`;
+    const ll=LL([S.la/S.n,S.lo/S.n]);tap(el,()=>{map.setLevel(ROAM_LV);map.setCenter(ll)});
+    const o=new kakao.maps.CustomOverlay({position:ll,content:el,xAnchor:.5,yAnchor:.5,zIndex:40});o.base=ll;o.el=el;ROAM.bub.push(o)}
+  ZONES.filter(z=>whole?z.a===a:regs.includes(z.r0)).forEach(z=>z.bnd.forEach(rg=>ROAM.zl.push(new kakao.maps.Polyline({path:rg.map(LL),strokeWeight:3,strokeColor:'#e6007e',strokeOpacity:.9,zIndex:2}))));
+  if(!whole){for(const r of regs){try{if(!DATA[r])DATA[r]=await getData(r)}catch(_){}}if(tok!==LT)return;
+    regs.forEach(r=>(DATA[r]&&DATA[r].bnd||[]).forEach(rg=>{const path=rg.map(LL);ROAM.zl.push(new kakao.maps.Polyline({path,strokeWeight:6,strokeColor:'#ffffff',strokeOpacity:.85,zIndex:1}),new kakao.maps.Polyline({path,strokeWeight:3,strokeColor:'#2f5d50',strokeOpacity:.8,strokeStyle:'shortdash',zIndex:1}))}))}
+  ROAM.zl.forEach(o=>o.setMap(map));
+  const b=new kakao.maps.LatLngBounds();Object.values(sum).forEach(S=>{if(S.n){b.extend(LL([S.box[0],S.box[1]]));b.extend(LL([S.box[2],S.box[3]]))}});
+  if(!b.isEmpty())map.setBounds(b);roamUpd()}
+function roamTot(){const t={aca:0,kyo:0,sch:0};Object.values(ROAM.sum).forEach(S=>{t.aca+=S.aca;t.kyo+=S.kyo;t.sch+=S.sch});
+  $i('c-aca').textContent=t.aca.toLocaleString()+'곳 (확대하면 표시)';$i('c-kyo').textContent=t.kyo.toLocaleString()+'곳';$i('c-sch').textContent=t.sch.toLocaleString()+'개교'}
+// 숫자 표가 겹치지 않게 화면 좌표에서 서로 밀어냄 (원래 위치로 약하게 당김)
+function roamLayout(){if(!ROAM||ROAM.shown!=='bub')return;const pj=map.getProjection();
+  const it=ROAM.bub.map(o=>{const p=pj.containerPointFromCoords(o.base);return{o,x:p.x,y:p.y,x0:p.x,y0:p.y,w:(o.el.offsetWidth||60)+4,h:(o.el.offsetHeight||30)+4}});
+  for(let k=0;k<120;k++){let moved=false;
+    for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++){const a=it[i],b=it[j],dx=b.x-a.x,dy=b.y-a.y,ox=(a.w+b.w)/2-Math.abs(dx),oy=(a.h+b.h)/2-Math.abs(dy);
+      if(ox>0&&oy>0){moved=true;if(ox<oy){const m=(ox/2+.5)*(dx<0?-1:1);a.x-=m;b.x+=m}else{const m=(oy/2+.5)*(dy<0?-1:1);a.y-=m;b.y+=m}}}
+    it.forEach(t=>{t.x+=(t.x0-t.x)*.02;t.y+=(t.y0-t.y)*.02});if(!moved)break}
+  it.forEach(t=>t.o.setPosition(pj.coordsFromContainerPoint(new kakao.maps.Point(t.x,t.y))))}
+async function roamUpd(){if(!ROAM)return;const R=ROAM;
+  if(map.getLevel()>ROAM_LV){if(R.shown!=='bub'){clear();cur={aca:[],sch:[],bnd:[]};R.bub.forEach(o=>o.setMap(map));R.shown='bub';roamTot()}requestAnimationFrame(roamLayout);return}
+  const bb=map.getBounds(),sw=bb.getSouthWest(),ne=bb.getNorthEast();
+  const regs=Object.entries(R.sum).filter(([r,S])=>S.n&&S.box[0]<=ne.getLat()&&S.box[2]>=sw.getLat()&&S.box[1]<=ne.getLng()&&S.box[3]>=sw.getLng())
+    .sort((x,y)=>{const c=map.getCenter(),d=S=>(S.la/S.n-c.getLat())**2+(S.lo/S.n-c.getLng())**2;return d(x[1])-d(y[1])}).slice(0,6).map(x=>x[0]).sort();
+  const key=regs.join('|');const kv=map.getLevel()<=KYO_LV;if(key===R.shown){if(R.kv!==kv){R.kv=kv;apply()}return}R.kv=kv;R.shown=key;R.bub.forEach(o=>o.setMap(null));
+  for(const r of regs){try{if(!DATA[r])DATA[r]=await getData(r);await geocodeAll(DATA[r],AREAS[R.a].pre)}catch(_){}if(ROAM!==R||R.shown!==key)return}
+  const ds=regs.map(r=>DATA[r]).filter(Boolean);const d={aca:ds.flatMap(x=>x.aca),sch:ds.flatMap(x=>x.sch),bnd:[]};
+  const keepPop=pop;if(keepPop)pop=null;clear();if(keepPop)pop=keepPop;cur=d;
+  bndPoly=ds.flatMap(x=>x.bnd).flatMap(rg=>{const path=rg.map(LL);return [new kakao.maps.Polyline({path,strokeWeight:6,strokeColor:'#ffffff',strokeOpacity:.85,zIndex:1}),new kakao.maps.Polyline({path,strokeWeight:3,strokeColor:'#2f5d50',strokeOpacity:.8,strokeStyle:'shortdash',zIndex:2})]});
+  d.sch.forEach(s=>{if(!s.ll)return;const el=document.createElement('div');el.className='sch';el.innerHTML=`<i></i><span>${esc(s.n.replace(/초등학교$/,'초').replace(/중학교$/,'중').replace(/고등학교$/,'고'))} <small>(${s.s.toLocaleString()}명)</small></span>`;const ll=LL(s.ll);tap(el,()=>openPop(ll,popSch(s)));const o=new kakao.maps.CustomOverlay({position:ll,content:el,xAnchor:0,yAnchor:.5,zIndex:10});o.el=el;o.rec=s;layers.sch.push(o)});
+  d.aca.forEach(r=>{if(!r.ll)return;const o={rec:r,getPosition:()=>LL(r.ll),setMap(){}};(r.k==='학원'?layers.aca:layers.kyo).push(o)});
+  buildChips(d);apply()}
+kakao.maps.event.addListener(map,'idle',()=>{if(ROAM)roamUpd()});
+function apply(){const ok=o=>!SEL.size||SEL.has(cat(o.rec.f));const vis=[];['sch','aca','kyo'].forEach(k=>{const on=document.getElementById('L-'+k).checked&&!(ROAM&&k==='kyo'&&map.getLevel()>KYO_LV);let n=0;layers[k].forEach(o=>{const v=FQ?FQ.has(o.rec):on&&(k==='sch'?LV.has(o.rec.lv):ok(o));if(v){n++;if(k!=='sch')vis.push(o.rec)}if(k==='sch')o.setMap(v?map:null)});if(k==='sch'){const vs=layers.sch.filter(o=>LV.has(o.rec.lv));const st=vs.reduce((a,o)=>a+o.rec.s,0).toLocaleString();document.getElementById('c-sch').textContent=vs.length+'개교 · 재학생 '+st+'명'}else document.getElementById('c-'+k).textContent=(ROAM&&k==='kyo'&&map.getLevel()>KYO_LV)?layers[k].length+'곳 (더 확대하면 표시)':SEL.size?n+'곳 (전체 '+layers[k].length+'곳)':layers[k].length+'곳'});
+  buildGroups(vis);bndPoly.forEach(x=>x.setMap(document.getElementById('L-bnd').checked?map:null));labels()}
+function buildGroups(vis){GRP.forEach(o=>o.setMap(null));GRP=[];const g={};vis.forEach(r=>{const k=r.ll[0].toFixed(4)+','+r.ll[1].toFixed(4);(g[k]=g[k]||[]).push(r)});
+ Object.values(g).forEach(list=>{const r=list[0];const ll=LL(r.ll);const el=document.createElement('div');let o;
+  if(list.length===1){const isA=r.k==='학원';el.className='ac nolabel'+(isA?'':' kyo')+(ZIN&&!ZIN(r)?' dim':'');const fs=fShort(r);el.title=r.n+(fs?'('+fs+')':'');el.innerHTML=`<i class="dot"></i><em>${esc(r.n)}${fs?'('+esc(fs)+')':''}</em>`;tap(el,()=>openPop(ll,popAca(r)));o=new kakao.maps.CustomOverlay({position:ll,content:el,xAnchor:0,yAnchor:0,zIndex:isA?20:30})}
+  else{list.sort((a,b)=>a.k===b.k?a.n.localeCompare(b.n,'ko'):(a.k==='학원'?-1:1));const na=list.filter(x=>x.k==='학원').length,nk=list.length-na;el.className='grp '+(nk===0?'a':na===0?'k':'m')+(ZIN&&!ZIN(r)?' dim':'');el.title=`같은 건물 ${list.length}곳 (학원 ${na}, 교습소 ${nk})`;el.innerHTML=`<b>${list.length}</b>`;tap(el,()=>openPop(ll,popGroup(list),list));o=new kakao.maps.CustomOverlay({position:ll,content:el,xAnchor:0,yAnchor:0,zIndex:35})}
+  o.el=el;o.single=list.length===1;o.setMap(map);GRP.push(o)})}
+function popGroup(list){const na=list.filter(x=>x.k==='학원').length,nk=list.length-na;const addr=roadPart(list[0].a);
+ return `<span class="tag" style="background:var(--ink)">같은 건물 ${list.length}곳</span><h3>${esc(addr)}</h3><p class="src" style="margin:0 0 6px">학원 ${na}곳 · 교습소 ${nk}곳 · 이름을 누르면 정보가 펼쳐집니다</p><ul class="gl">${list.map((r,i)=>{const fs=fShort(r);return `<li><button data-i="${i}"><i class="${r.k==='학원'?'a':'k'}"></i>${esc(r.n)}${fs?`<small>${esc(fs)}</small>`:''}</button></li>`}).join('')}</ul>`}
+function bindGroup(box,list){box.querySelectorAll('.gl button').forEach(b=>tap(b,()=>{const li=b.parentNode;const open=li.querySelector('.gd');box.querySelectorAll('.gd').forEach(x=>x.remove());box.querySelectorAll('.gl button').forEach(x=>x.classList.remove('on'));if(open)return;const r=list[+b.dataset.i];const d=document.createElement('div');d.className='gd';d.innerHTML=acaDetail(r);li.appendChild(d);b.classList.add('on');popAt=Date.now()}))}
+function buildChips(d){const cnt={};d.aca.forEach(r=>{if(r.ll){const c=cat(r.f);cnt[c]=(cnt[c]||0)+1}});const box=document.getElementById('chips');box.innerHTML='';
+ CATS.filter(c=>cnt[c]).forEach(c=>{const b=document.createElement('button');b.setAttribute('aria-pressed',String(SEL.has(c)));b.innerHTML=`${c}<small>${cnt[c]}</small>`;b.onclick=()=>{SEL.has(c)?SEL.delete(c):SEL.add(c);b.setAttribute('aria-pressed',String(SEL.has(c)));apply()};box.appendChild(b)})}
+document.querySelectorAll('#lvsel button').forEach(b=>b.onclick=()=>{const l=b.dataset.l;LV.has(l)?LV.delete(l):LV.add(l);b.setAttribute('aria-pressed',String(LV.has(l)));apply()});
+document.getElementById('catAll').onclick=()=>{SEL.clear();document.querySelectorAll('#chips button').forEach(b=>b.setAttribute('aria-pressed','false'));apply()};
+function labels(){const lv=map.getLevel();layers.sch.forEach(o=>o.el.classList.toggle('nolabel',lv>6));const lim=FQ?14:(layers.aca.length+layers.kyo.length)>800?2:3;GRP.forEach(o=>{if(o.single)o.el.classList.toggle('nolabel',lv>lim)});dcLater()}
+kakao.maps.event.addListener(map,'zoom_changed',labels);
+function declutter(){const box=map.getNode().getBoundingClientRect();const inV=r=>r.right>box.left&&r.left<box.right&&r.bottom>box.top&&r.top<box.bottom;
+ const ov=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+ const obs=[];document.querySelectorAll('.grp,.ac .dot,.sch i,.sch:not(.nolabel) span').forEach(e=>{const r=e.getBoundingClientRect();if(r.width&&inV(r))obs.push({e,r})});
+ const items=GRP.filter(o=>o.single&&!o.el.classList.contains('nolabel')).map(o=>({el:o.el,r:o.el.getBoundingClientRect()})).filter(x=>inV(x.r));
+ items.forEach(x=>{const em=x.el.querySelector('em');em.classList.remove('mv');em.style.left=em.style.top=''});
+ items.sort((a,b)=>a.r.top-b.r.top||a.r.left-b.r.left);const placed=[];
+ items.forEach(({el,r:er})=>{const em=el.querySelector('em'),dot=el.querySelector('.dot');const w=em.offsetWidth,h=em.offsetHeight;
+  const C=[[24,14-h/2],[4-w,14-h/2],[14-w/2,5-h],[14-w/2,23],[20,7-h],[20,21],[8-w,7-h],[8-w,21],[14-w/2,3-2*h],[14-w/2,25+h],[24,16],[24,12-h],[4-w,16],[4-w,12-h]];
+  let best=null,bs=1e9;for(const [x,y] of C){const r={left:er.left+x,top:er.top+y,right:er.left+x+w,bottom:er.top+y+h};let sc=0;
+   placed.forEach(p=>sc+=ov(r,p));obs.forEach(o=>{if(o.e!==dot)sc+=ov(r,o.r)});if(sc<bs){bs=sc;best=[x,y,r]}if(sc===0)break}
+  if(best[0]!==24||best[1]!==14-h/2){em.classList.add('mv');em.style.left=best[0]+'px';em.style.top=best[1]+'px'}placed.push(best[2])})}
+let dcT;function dcLater(){clearTimeout(dcT);dcT=setTimeout(declutter,60)}
+kakao.maps.event.addListener(map,'idle',dcLater);
+['sch','aca','kyo','bnd'].forEach(k=>document.getElementById('L-'+k).addEventListener('change',apply));
+document.querySelectorAll('.basesel button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.basesel button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));map.setMapTypeId(b.dataset.b==='sky'?kakao.maps.MapTypeId.HYBRID:kakao.maps.MapTypeId.ROADMAP)});
+const AREAS={"sb": {"t": "서울 교육지도", "l": "서울특별시 (25개 구)", "pre": "서울특별시 ", "g": [["북부", ["노원구", "도봉구"]], ["성북강북", ["성북구", "강북구"]], ["동부", ["동대문구", "중랑구"]], ["성동광진", ["성동구", "광진구"]], ["중부", ["종로구", "중구", "용산구"]], ["서부", ["은평구", "서대문구", "마포구"]], ["강서양천", ["강서구", "양천구"]], ["남부", ["구로구", "금천구", "영등포구"]], ["동작관악", ["동작구", "관악구"]], ["강남서초", ["강남구", "서초구"]], ["강동송파", ["강동구", "송파구"]]]}, "bs": {"t": "부산 교육지도", "l": "부산광역시 (16개 구군)", "pre": "부산광역시 ", "g": [["남부", ["부산 남구", "부산 동구", "부산진구"]], ["동래", ["금정구", "동래구", "연제구"]], ["북부", ["부산 강서구", "부산 북구", "사상구"]], ["서부", ["부산 서구", "부산 중구", "사하구", "영도구"]], ["해운대", ["기장군", "수영구", "해운대구"]]]}, "dg": {"t": "대구 교육지도", "l": "대구광역시 (9개 구군)", "pre": "대구광역시 ", "g": [["동부", ["대구 중구", "대구 동구", "수성구"]], ["서부", ["대구 서구", "대구 북구"]], ["남부", ["대구 남구", "달서구"]], ["달성", ["달성군"]], ["군위", ["군위군"]]]}, "ic": {"t": "인천 교육지도", "l": "인천광역시 (11개 구군)", "pre": "인천광역시 ", "g": [["강화", ["강화군"]], ["남부", ["미추홀구", "영종구", "옹진군", "제물포구"]], ["동부", ["남동구", "연수구"]], ["북부", ["계양구", "부평구"]], ["서부", ["검단구", "서해구"]]]}, "gj": {"t": "광주 교육지도", "l": "광주광역시 (5개 구)", "pre": "광주광역시 ", "g": [["동부", ["광주 동구", "광주 북구"]], ["서부", ["광산구", "광주 남구", "광주 서구"]]]}, "dj": {"t": "대전 교육지도", "l": "대전광역시 (5개 구)", "pre": "대전광역시 ", "g": [["동부", ["대덕구", "대전 동구", "대전 중구"]], ["서부", ["대전 서구", "유성구"]]]}, "us": {"t": "울산 교육지도", "l": "울산광역시 (5개 구군)", "pre": "울산광역시 ", "g": [["강남", ["울산 남구", "울주군"]], ["강북", ["울산 동구", "울산 북구", "울산 중구"]]]}, "sj": {"t": "세종 교육지도", "l": "세종특별자치시", "pre": "세종특별자치시 ", "g": [["세종특별자치시교육청", ["세종시"]]]}, "gg": {"t": "경기 교육지도", "l": "경기도 (31개 시군)", "pre": "경기도 ", "g": [["연천", ["연천군"]], ["동두천양주", ["동두천시", "양주시"]], ["포천", ["포천시"]], ["파주", ["파주시"]], ["의정부", ["의정부시"]], ["고양", ["고양시"]], ["구리남양주", ["구리시", "남양주시"]], ["가평", ["가평군"]], ["김포", ["김포시"]], ["부천", ["부천시"]], ["광명", ["광명시"]], ["시흥", ["시흥시"]], ["안산", ["안산시"]], ["안양과천", ["안양시", "과천시"]], ["군포의왕", ["군포시", "의왕시"]], ["수원", ["수원시"]], ["성남", ["성남시"]], ["광주하남", ["광주시", "하남시"]], ["양평", ["양평군"]], ["용인", ["용인시"]], ["화성오산", ["화성시", "오산시"]], ["이천", ["이천시"]], ["여주", ["여주시"]], ["평택", ["평택시"]], ["안성", ["안성시"]]]}, "gw": {"t": "강원 교육지도", "l": "강원특별자치도 (18개 시군)", "pre": "강원특별자치도 ", "g": [["강릉", ["강릉시"]], ["고성", ["강원 고성군"]], ["동해", ["동해시"]], ["삼척", ["삼척시"]], ["속초양양", ["속초시", "양양군"]], ["양구", ["양구군"]], ["영월", ["영월군"]], ["원주", ["원주시"]], ["인제", ["인제군"]], ["정선", ["정선군"]], ["철원", ["철원군"]], ["춘천", ["춘천시"]], ["태백", ["태백시"]], ["평창", ["평창군"]], ["홍천", ["홍천군"]], ["화천", ["화천군"]], ["횡성", ["횡성군"]]]}, "cb": {"t": "충북 교육지도", "l": "충청북도 (11개 시군)", "pre": "충청북도 ", "g": [["괴산증평", ["괴산군", "증평군"]], ["단양", ["단양군"]], ["보은", ["보은군"]], ["영동", ["영동군"]], ["옥천", ["옥천군"]], ["음성", ["음성군"]], ["제천", ["제천시"]], ["진천", ["진천군"]], ["청주", ["청주시"]], ["충주", ["충주시"]]]}, "cn": {"t": "충남 교육지도", "l": "충청남도 (15개 시군)", "pre": "충청남도 ", "g": [["공주", ["공주시"]], ["금산", ["금산군"]], ["논산계룡", ["계룡시", "논산시"]], ["당진", ["당진시"]], ["보령", ["보령시"]], ["부여", ["부여군"]], ["서산", ["서산시"]], ["서천", ["서천군"]], ["아산", ["아산시"]], ["예산", ["예산군"]], ["천안", ["천안시"]], ["청양", ["청양군"]], ["태안", ["태안군"]], ["홍성", ["홍성군"]]]}, "jb": {"t": "전북 교육지도", "l": "전북특별자치도 (14개 시군)", "pre": "전북특별자치도 ", "g": [["고창", ["고창군"]], ["군산", ["군산시"]], ["김제", ["김제시"]], ["남원", ["남원시"]], ["무주", ["무주군"]], ["부안", ["부안군"]], ["순창", ["순창군"]], ["완주", ["완주군"]], ["익산", ["익산시"]], ["임실", ["임실군"]], ["장수", ["장수군"]], ["전주", ["전주시"]], ["정읍", ["정읍시"]], ["진안", ["진안군"]]]}, "jn": {"t": "전남 교육지도", "l": "전라남도 (22개 시군)", "pre": "전라남도 ", "g": [["강진", ["강진군"]], ["고흥", ["고흥군"]], ["곡성", ["곡성군"]], ["광양", ["광양시"]], ["구례", ["구례군"]], ["나주", ["나주시"]], ["담양", ["담양군"]], ["목포", ["목포시"]], ["무안", ["무안군"]], ["보성", ["보성군"]], ["순천", ["순천시"]], ["신안", ["신안군"]], ["여수", ["여수시"]], ["영광", ["영광군"]], ["영암", ["영암군"]], ["완도", ["완도군"]], ["장성", ["장성군"]], ["장흥", ["장흥군"]], ["진도", ["진도군"]], ["함평", ["함평군"]], ["해남", ["해남군"]], ["화순", ["화순군"]]]}, "gb": {"t": "경북 교육지도", "l": "경상북도 (22개 시군)", "pre": "경상북도 ", "g": [["경산", ["경산시"]], ["경주", ["경주시"]], ["고령", ["고령군"]], ["구미", ["구미시"]], ["김천", ["김천시"]], ["문경", ["문경시"]], ["봉화", ["봉화군"]], ["상주", ["상주시"]], ["성주", ["성주군"]], ["안동", ["안동시"]], ["영덕", ["영덕군"]], ["영양", ["영양군"]], ["영주", ["영주시"]], ["영천", ["영천시"]], ["예천", ["예천군"]], ["울릉", ["울릉군"]], ["울진", ["울진군"]], ["의성", ["의성군"]], ["청도", ["청도군"]], ["청송", ["청송군"]], ["칠곡", ["칠곡군"]], ["포항", ["포항시"]]]}, "gn": {"t": "경남 교육지도", "l": "경상남도 (18개 시군)", "pre": "경상남도 ", "g": [["거제", ["거제시"]], ["거창", ["거창군"]], ["고성", ["경남 고성군"]], ["김해", ["김해시"]], ["남해", ["남해군"]], ["밀양", ["밀양시"]], ["사천", ["사천시"]], ["산청", ["산청군"]], ["양산", ["양산시"]], ["의령", ["의령군"]], ["진주", ["진주시"]], ["창녕", ["창녕군"]], ["창원", ["창원시"]], ["통영", ["통영시"]], ["하동", ["하동군"]], ["함안", ["함안군"]], ["함양", ["함양군"]], ["합천", ["합천군"]]]}, "jj": {"t": "제주 교육지도", "l": "제주특별자치도 (2개 시)", "pre": "제주특별자치도 ", "g": [["제주시", ["제주시"]], ["서귀포시", ["서귀포시"]]]}};
+const GRPS={},R2A={};if(ACC.on())ACC.filterAreas(AREAS);Object.entries(AREAS).forEach(([a,A])=>A.g.forEach(([n,m])=>{const id=a+':'+n;GRPS[id]=m;m.forEach(r=>R2A[r]={a,g:id})}));if(R2A['안동시']&&R2A['예천군'])GRPS['도청신도시']=['안동시','예천군'];
+const SHORT={sb:'서울',bs:'부산',dg:'대구',ic:'인천',gj:'광주',dj:'대전',us:'울산',sj:'세종',gg:'경기',gw:'강원',cb:'충북',cn:'충남',jb:'전북',jn:'전남',gb:'경북',gn:'경남',jj:'제주'},sh=x=>x.replace(/^(대구|부산|인천|광주|대전|울산|강원|경남) /,''),$i=id=>document.getElementById(id);
+const oname=(a,n)=>/교육청$/.test(n)?n:n+'교육지원청';
+let MODE='reg',TAB=AREAS.gb?'gb':Object.keys(AREAS)[0],ZTAB='sb',CUR='',ZONES=[],ZR='4';const OPEN=new Set();
+const rq=$i('rq'),rqx=$i('rqx'),tabsEl=$i('tabs'),hint=$i('hint'),list=$i('list'),zi=$i('zi');
+const ini=s=>[...s].map(c=>{const k=c.charCodeAt(0)-44032;return k>=0&&k<=11171?'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'[Math.floor(k/588)]:c}).join(''),clean=s=>s.replace(/\s/g,'');
+const mt=(s,v)=>clean(s).includes(v)||(/^[ㄱ-ㅎ]+$/.test(v)&&ini(clean(s)).includes(v));
+function label(r){if(r.startsWith('전체:'))return (SHORT[r.slice(3)]||'')+' 전체';if(r.startsWith('학원가:')){const z=ZONES.find(x=>'학원가:'+x.name===r);const nm=r.slice(4);return (z&&!nm.startsWith(z.sido)?z.sido+' · ':'')+nm}if(r==='도청신도시')return '경북 · 도청신도시 (안동·예천)';
+ if(GRPS[r]&&r.includes(':')){const a=r.split(':')[0],n=r.slice(a.length+1);return SHORT[a]+' · '+oname(a,n)+' 전체 ('+GRPS[r].map(sh).join('·')+')'}
+ const A=R2A[r];if(!A)return r;const n=A.g.slice(A.a.length+1),m=GRPS[A.g];return SHORT[A.a]+' · '+(m.length>1?oname(A.a,n)+' · ':'')+sh(r)}
+const row=(r,t,s)=>`<button class="row" data-r="${esc(r)}" aria-pressed="${r===CUR}"><strong>${esc(t)}</strong>${s?`<small>${esc(s)}</small>`:''}</button>`;
+function renderList(){const v=clean(rq.value);rqx.hidden=!rq.value;tabsEl.hidden=!!v;
+ if(MODE==='zone')return renderZones(v);if(v)return renderSearch(v);
+ tabsEl.innerHTML=Object.keys(AREAS).map(a=>`<button data-a="${a}" aria-pressed="${a===TAB}">${SHORT[a]}</button>`).join('');
+ const A=AREAS[TAB];hint.textContent='교육지원청 '+A.g.length+'곳 · 시군구 '+A.g.flatMap(g=>g[1]).length+'곳';
+ let h=`<div class="sp">${row('전체:'+TAB,SHORT[TAB]+' 전체 보기','숫자 = 학원+교습소 수 · 확대하면 하나하나 표시')}</div>`+(TAB==='gb'&&GRPS['도청신도시']?`<div class="sp">${row('도청신도시','도청신도시','안동시·예천군 일부')}</div>`:'');
+ h+=A.g.map(([n,m])=>{const id=TAB+':'+n;if(m.length===1)return row(m[0],oname(TAB,n),m[0]);const op=OPEN.has(id)||m.includes(CUR)||CUR===id||(TAB==='gb'&&n==='북부권'&&CUR==='도청신도시');
+  return `<details data-id="${id}"${op?' open':''}><summary><strong>${oname(TAB,n)}</strong><small>${m.map(sh).join(' · ')}</small></summary><div class="in">${row(id,'관할 전체 보기',m.map(sh).join(' · '))}${m.map(r=>row(r,sh(r))).join('')}</div></details>`}).join('');
+ list.innerHTML=h;list.querySelectorAll('details').forEach(el=>el.addEventListener('toggle',()=>el.open?OPEN.add(el.dataset.id):OPEN.delete(el.dataset.id)))}
+function renderSearch(v){const rows=[];Object.entries(AREAS).forEach(([a,A])=>A.g.forEach(([n,m])=>{const id=a+':'+n;
+  if(m.length>1&&mt(oname(a,n),v))rows.push(row(id,oname(a,n)+' 전체',SHORT[a]+' · '+m.map(sh).join(' · ')));
+  m.forEach(r=>{if(mt(r,v)||(m.length===1&&mt(oname(a,n),v)))rows.push(row(r,sh(r),SHORT[a]+(m.length>1?' · '+oname(a,n):' · '+oname(a,n))))})}));
+ if(GRPS['도청신도시']&&mt('도청신도시',v))rows.push(row('도청신도시','도청신도시','경북 · 안동시·예천군 일부'));
+ hint.textContent='전체 시도에서 찾기 · '+(rows.length?rows.length+'개 결과':'결과 없음');list.innerHTML=rows.join('')||'<p class="empty">일치하는 지역이 없습니다.<br>다른 이름으로 찾아보세요.</p>'}
+function renderZones(v){const T=Object.keys(SHORT).filter(a=>ZONES.some(z=>z.a===a));if(!v)tabsEl.innerHTML=T.map(a=>`<button data-a="${a}" aria-pressed="${a===ZTAB}">${SHORT[a]}</button>`).join('');
+ const L=ZONES.filter(z=>v?mt(z.name+z.sgg+z.sido,v):z.a===ZTAB);
+ hint.textContent=v?'학원가 찾기 · '+(L.length?L.length+'곳':'결과 없음'):`${SHORT[ZTAB]} 학원가 ${L.length}곳 · 보습·입시 중심 밀집지`;
+ const zr=z=>row('학원가:'+z.name,z.name,(v?z.sido+' · ':'')+`학원 ${z.st.aca.toLocaleString()} · 교습소 ${z.st.kyo.toLocaleString()} · ${z.st.area}㎢`);
+ const M=L.filter(z=>z.major),O=L.filter(z=>!z.major);
+ list.innerHTML=((M.length?'<p class="gh">주요 학원가</p>'+M.map(zr).join(''):'')+(O.length?'<p class="gh">'+(M.length?'그 밖의 밀집지':'밀집지')+'</p>'+O.map(zr).join(''):''))||'<p class="empty">일치하는 학원가가 없습니다.</p>'}
+function setMode(m){MODE=m;document.querySelectorAll('.mode button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===m)));rq.placeholder=m==='zone'?'학원가 이름·동 이름 찾기':'교육지원청·시군구 찾기';rq.value='';renderList();list.scrollTop=0}
+function pick(r,user){CUR=r;if(r.startsWith('학원가:')){const z=ZONES.find(x=>'학원가:'+x.name===r);if(z)ZTAB=z.a;if(MODE!=='zone')setMode('zone')}else{TAB=r==='도청신도시'?'gb':r.startsWith('전체:')?r.slice(3):R2A[r]?R2A[r].a:r.split(':')[0];if(MODE!=='reg')setMode('reg')}
+ rq.value='';renderList();q.value='';res.innerHTML='';
+ $i('curK').textContent=r.startsWith('학원가:')?'현재 학원가':'현재 지역';const lb=label(r);$i('curName').textContent=lb;$i('curName').title=lb;document.title=lb+' · A-Atlas EduMap';
+ const el=list.querySelector('.row[aria-pressed=true]');if(el){const box=el.closest('details')||el;if(box.offsetTop<list.scrollTop||box.offsetTop+el.offsetHeight>list.scrollTop+list.clientHeight)list.scrollTop=Math.max(0,box.offsetTop-6)}
+ load(r);history.replaceState(null,'','#'+encodeURIComponent(r));if(user&&innerWidth<=640){panel.classList.add('min');tg.textContent='펼치기'}}
+list.addEventListener('click',e=>{const b=e.target.closest('.row');if(b)pick(b.dataset.r,true)});
+tabsEl.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;if(MODE==='zone')ZTAB=b.dataset.a;else TAB=b.dataset.a;renderList();list.scrollTop=0};
+rq.addEventListener('input',()=>{renderList();list.scrollTop=0});rq.addEventListener('keydown',e=>{if(e.key==='Escape')rqx.click();if(e.key==='Enter'){e.preventDefault();rqGo()}});
+function rqGo(){renderList();const b=list.querySelector('.row');if(rq.value.trim()&&b){pick(b.dataset.r,true);rq.blur()}else rq.focus()}
+document.getElementById('rqgo').onclick=rqGo;rqx.onclick=()=>{rq.value='';renderList();rq.focus()};
+document.querySelectorAll('.mode button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+const CC={'보습·입시':'#c2410c','외국어':'#2563eb','음악':'#db2777','미술':'#ca8a04','무용·댄스':'#9333ea','코딩·컴퓨터':'#0891b2','독서실':'#64748b','직업·성인':'#65a30d','기타':'#a3a3a3','미기재':'#d4d4d4'};
+function showZone(z){const s=z.st,tot=s.aca+s.kyo,won=x=>x?(x/10000).toLocaleString('ko-KR',{maximumFractionDigits:1})+'만 원':'-';const cats=Object.entries(s.cat);
+ const Y=[];for(let y=2010;y<=2026;y++)Y.push([y,s.yr[y]||0]);const pre=Object.entries(s.yr).filter(([y])=>+y<2010).reduce((a,[,v])=>a+v,0),mx=Math.max(1,...Y.map(x=>x[1]));
+ const sc=z.sch[ZR],sn=['초','중','고'].reduce((a,l)=>a+sc[l][0],0),ss=['초','중','고'].reduce((a,l)=>a+sc[l][1],0);
+ zi.innerHTML=`<h2>${esc(z.name)}<small>${z.sido} ${esc(sh(z.sgg))}</small></h2>
+<div class="tiles"><span>학원<b>${s.aca.toLocaleString()}</b></span><span>교습소<b>${s.kyo.toLocaleString()}</b></span><span>면적(㎢)<b>${s.area}</b></span><span>1㎢당 학원<b>${s.dens.toLocaleString()}</b></span></div>
+<h2>분야 구성<small>학원·교습소 ${tot.toLocaleString()}곳</small></h2><div class="cbar">${cats.map(([c,n])=>`<i style="flex:${n};background:${CC[c]}" title="${c} ${n}곳"></i>`).join('')}</div><div class="cleg">${cats.slice(0,6).map(([c,n])=>`<span><i style="background:${CC[c]}"></i>${c} ${Math.round(n/tot*100)}%</span>`).join('')}</div>
+<h2>교습비 (월, 1인)<small>공개한 곳 ${s.fee.pub.toLocaleString()} / ${s.fee.n.toLocaleString()}곳</small></h2><table class="zt"><tr><td>보습·입시 가운데값</td><td><b>${won(s.fee.med_bs)}</b></td></tr><tr><td>보습·입시 가운데 절반</td><td>${won(s.fee.q1_bs)} ~ ${won(s.fee.q3_bs)}</td></tr><tr><td>전체 분야 가운데값</td><td>${won(s.fee.med)}</td></tr></table>
+<h2>주변 학교<span class="rsel">${['1','2','4'].map(k=>`<button data-k="${k}" aria-pressed="${k===ZR}">${k}km</button>`).join('')}</span></h2>
+<table class="zt"><tr><th>경계에서 ${ZR}km 안</th><th>학교</th><th>학생</th></tr>${['초','중','고'].map(l=>`<tr><td>${l==='초'?'초등학교':l==='중'?'중학교':'고등학교'}</td><td>${sc[l][0]}곳</td><td>${sc[l][1].toLocaleString()}명</td></tr>`).join('')}<tr><td><b>합계</b></td><td><b>${sn}곳</b></td><td><b>${ss.toLocaleString()}명</b></td></tr></table>
+<h2>개원 연도별 수<small>지금 운영 중인 ${s.yr_n.toLocaleString()}곳</small></h2><div class="yrs">${Y.map(([y,n])=>`<div style="height:${n/mx*100}%" title="${y}년 ${n}곳"></div>`).join('')}</div><div class="yax"><span>2010</span><span>2018</span><span>2026</span></div>
+<p class="src">2009년 이전에 개원한 곳 ${pre.toLocaleString()}곳. 나이스 공개 자료에는 폐원한 곳이 빠져 있어, 폐원 추이는 별도 자료가 필요합니다.</p>
+<h2>학원이 많은 건물<small>상위 5곳</small></h2><ol>${s.bld.map(([a,n])=>`<li>${esc(a)} <small>${n}곳</small></li>`).join('')}</ol>
+<p class="src">경계는 보습·입시 학원·교습소와 독서실(분야 미기재 포함)의 밀집도로 자동 계산한 초안입니다(반경 150m 안에 25곳 이상 모인 덩어리 중 100곳 이상. 광역시·경기 외 학원가가 없던 시군은 200m·20곳·60곳 이상). 지도의 옅은 점선은 경계에서 4km 범위이고, 경계 밖 학원은 흐리게 표시합니다.</p>`;
+ zi.querySelectorAll('.rsel button').forEach(b=>b.onclick=()=>{ZR=b.dataset.k;showZone(z)});zi.hidden=false}
+const q=document.getElementById('q'),res=document.getElementById('results');
+let IDX=null,IDXP=null;
+function tagD(r,d){(d.aca||[]).forEach(x=>x.__r=r);(d.sch||[]).forEach(x=>x.__r=r);return d}
+function goLink(rec){const r=rec&&rec.__r;if(!r||(r===CUR&&!FQ))return '';return `<p style="margin:8px 0 0"><button type="button" class="rmgo" data-r="${esc(r)}" style="all:unset;cursor:pointer;font-size:12px;font-weight:700;color:#12263c;text-decoration:underline">${esc(rlabel(r))} 지도 열기 ›</button></p>`}
+{const pa=popAca,ps=popSch;popAca=r=>pa(r)+goLink(r);popSch=x=>ps(x)+goLink(x)}
+function loadIdx(){if(!IDXP)IDXP=(ACC.on()?ACC.search():fetch('search_index.json?v=20261127t').then(r=>r.json())).then(j=>{IDX=j;return j}).catch(()=>{IDXP=null;return null});return IDXP}
+const KT=['학교','학원','교습소'],kOf=k=>k==='sch'?0:k==='aca'?1:2;
+function lkey(n,lat,lng){return n+'|'+Math.round(lat*1e4)+'|'+Math.round(lng*1e4)}
+function qLocal(v){if(!v)return[];const all=[...layers.sch.map(o=>[o,'sch',o.rec.n,'학교 · 재학생 '+o.rec.s.toLocaleString()+'명']),...layers.aca.map(o=>[o,'aca',o.rec.n,'학원 · '+o.rec.a+' '+(o.rec.f||'')]),...layers.kyo.map(o=>[o,'kyo',o.rec.n,'교습소 · '+o.rec.a+' '+(o.rec.f||'')])];
+  const ph=telQ(v);if(ph)return all.filter(x=>{const t=(x[0].rec.tel||'').replace(/\D/g,'');return telHit(t,ph)}).map(x=>[x[0],x[1],x[2],telTag(x[0].rec.tel,ph)+' · '+x[3]]);
+  return all.filter(x=>(x[2]+' '+x[3]).includes(v))}
+function telQ(v){const d=v.replace(/[\s\-().]/g,'');return /^\d{4,}$/.test(d)?d:null}
+function telHit(t,ph){return !!t&&(ph.length===4?t.endsWith(ph):t.includes(ph))}
+function telTag(t,ph){t=(t||'').replace(/\D/g,'');return ph.length===4?'전화 끝자리 '+ph+' 일치':'전화 '+t+' 일치'}
+function qRemote(v,loc){if(!v||!IDX)return[];const seen=new Set();[...layers.sch,...layers.aca,...layers.kyo].forEach(o=>{const r=o.rec;if(r.ll)seen.add(lkey(r.n,r.ll[0],r.ll[1]))});
+  const ph=telQ(v);const out=[];for(const w of IDX.rows){if(ph?!telHit(w[5],ph):!w[0].includes(v))continue;const lat=w[3]/1e4,lng=w[4]/1e4;if(seen.has(w[0]+'|'+w[3]+'|'+w[4]))continue;out.push({n:w[0],t:w[1],r:IDX.regs[w[2]],ll:[lat,lng],m:ph?telTag(w[5],ph):''})}return out}
+function rlabel(r){try{return label(r)}catch(_){return r}}
+// 25km 안팎으로 이어진 곳끼리 한 무리 (격자 칸 연결)
+function clusters(pts){const cs=.2,cl=.25,cell=p=>Math.floor(p.ll[0]/cs)+','+Math.floor(p.ll[1]/cl);const g=new Map();pts.forEach(p=>{const k=cell(p);if(!g.has(k))g.set(k,[]);g.get(k).push(p)});
+  const seen=new Set(),out=[];for(const k of g.keys()){if(seen.has(k))continue;const st=[k],m=[];seen.add(k);while(st.length){const c=st.pop();m.push(...g.get(c));const [a,b]=c.split(',').map(Number);for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const n=(a+i)+','+(b+j);if(g.has(n)&&!seen.has(n)){seen.add(n);st.push(n)}}}out.push(m)}
+  return out}
+function cname(c){const cnt={};c.forEach(p=>{const s=(rlabel(p.r).split(' · ')[0])||p.r;cnt[s]=(cnt[s]||0)+1});const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  if(top.length===1){const rs=[...new Set(c.map(p=>p.r))];if(rs.length===1){const l=rlabel(rs[0]).split(' · ');return l.slice(-1)[0]===top[0][0]?top[0][0]:top[0][0]+' '+l.slice(-1)[0]}}return top[0][0]+(top.length>1?' 외':'')}
+const qact=document.getElementById('qact'),qshow=document.getElementById('qshow'),fqchip=document.getElementById('fqchip');let FQV='',RM=[],CL=[],CI=0;
+function clearRM(){RM.forEach(o=>o.setMap(null));RM=[]}
+function drawRM(c){clearRM();const pts=c.filter(p=>p.remote);const lab=pts.length<=80;pts.slice(0,3000).forEach(p=>{const el=document.createElement('div');el.className='rm'+(lab?'':' nolabel')+(p.t===0?' s':p.t===2?' k':'');el.title=p.n;el.innerHTML='<i></i><em>'+esc(p.n)+'</em>';el.onclick=e=>{e.stopPropagation();openRemote(p)};
+  const o=new kakao.maps.CustomOverlay({position:LL(p.ll),content:el,yAnchor:.5,xAnchor:.5,zIndex:4});o.setMap(map);RM.push(o)})}
+async function openRemote(p){openPop(LL(p.ll),`<b>${esc(p.n)}</b><br><small>${KT[p.t]} · ${esc(rlabel(p.r))}</small><p style="margin:6px 0 0;font-size:12px;color:#5d6b66">정보 불러오는 중…</p>`);
+  try{if(!DATA[p.r])DATA[p.r]=await getData(p.r);const d=DATA[p.r];const k=lkey(p.n,p.ll[0],p.ll[1]);
+   const rec=(p.t===0?d.sch:d.aca).find(x=>x.ll&&lkey(x.n,x.ll[0],x.ll[1])===k);
+   if(rec){rec.__r=rec.__r||p.r;openPop(LL(p.ll),p.t===0?popSch(rec):popAca(rec))}}catch(_){}}
+function fit(c){if(c.length===1){map.setLevel(4);map.setCenter(LL(c[0].ll));return}const b=new kakao.maps.LatLngBounds();c.forEach(p=>b.extend(LL(p.ll)));map.setBounds(b,innerWidth>640?70:130,40,innerWidth>640?60:110,innerWidth>640?360:40)}
+function goCl(i){CI=i;const c=i<0?CL.flat():CL[i];drawRM(c);fit(c);updFQ()}
+function updFQ(){const v=q.value.trim();if(FQ){qact.hidden=false;qshow.className='on';qshow.textContent='전체 다시 보기';fqchip.hidden=false;
+   const tot=CL.reduce((a,c)=>a+c.length,0),cur=CI<0?tot:CL[CI].length;document.getElementById('fqtxt').textContent=`'${FQV}' ${cur}곳`+(CI<0?' (전국)':'');
+   const ot=document.getElementById('fqot');const others=CL.map((c,i)=>[c,i]).filter(([c,i])=>i!==CI);
+   if(CL.length>1){ot.hidden=false;ot.innerHTML=(CI<0?'':'다른 지역 '+(tot-cur)+'곳: ')+others.slice(0,6).map(([c,i])=>`<button data-i="${i}">${esc(cname(c))} ${c.length}</button>`).join('')+(others.length>6?` <span>외 ${others.length-6}곳</span>`:'')+(CI<0?'':'<button data-i="-1">전국 보기</button>');
+    ot.querySelectorAll('button').forEach(b=>b.onclick=()=>goCl(+b.dataset.i))}else ot.hidden=true;return}
+  fqchip.hidden=true;const n=v?qLocal(v).length+qRemote(v).length:0;qact.hidden=!n;qshow.className='';qshow.textContent=`지도에 검색 결과만 표시 (${n}곳)`+(IDX?'':'')}
+async function showFQ(){const v=q.value.trim();if(!v)return;await loadIdx();const loc=qLocal(v),rem=qRemote(v);if(!loc.length&&!rem.length)return;
+  FQ=new Set(loc.map(x=>x[0].rec));FQV=v;closePop();apply();
+  const pts=[...loc.map(x=>{const p=x[0].getPosition();return{n:x[2],ll:[p.getLat(),p.getLng()],r:x[0].rec.__r||'',local:true}}),...rem.map(p=>({...p,remote:true}))];
+  pts.forEach(p=>{if(p.local&&!p.r)p.r=CUR||''});
+  CL=clusters(pts);const c0=map.getCenter(),cy=c0.getLat(),cx=c0.getLng();
+  const dist=c=>Math.min(...c.map(p=>(p.ll[0]-cy)**2+((p.ll[1]-cx)*.8)**2));
+  CL.sort((a,b)=>dist(a)-dist(b));goCl(0);if(innerWidth<=640)panel.classList.add('min')}
+function hideFQ(){if(!FQ)return;FQ=null;clearRM();CL=[];closePop();apply();updFQ()}
+qshow.onclick=()=>FQ?hideFQ():showFQ();document.getElementById('qgo').onclick=()=>{if(FQ&&q.value.trim()===FQV)return;if(FQ)hideFQ();showFQ();q.blur()};document.getElementById('fqx').onclick=hideFQ;
+q.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();showFQ();q.blur()}});
+q.addEventListener('focus',loadIdx,{once:true});
+function qInput(){const v=q.value.trim();res.innerHTML='';if(FQ&&v!==FQV)hideFQ();updFQ();if(!v||!cur)return;
+  const loc=qLocal(v);loc.slice(0,30).forEach(([o,k,t,sub])=>{const b=document.createElement('button');b.innerHTML=`${esc(t)}<br><small>${esc(sub.replace(/경상북도 |경북 /,''))}</small>`;b.onclick=()=>{const cb=document.getElementById('L-'+k);if(!cb.checked&&!FQ){cb.checked=true;apply()}map.setLevel(3);map.setCenter(o.getPosition());openPop(o.getPosition(),k==='sch'?popSch(o.rec):popAca(o.rec));if(innerWidth<=640)panel.classList.add('min')};res.appendChild(b)});
+  const rem=qRemote(v);if(rem.length){const h=document.createElement('div');h.className='rmh';h.textContent=`다른 지역 ${rem.length.toLocaleString()}곳`;res.appendChild(h);
+   rem.slice(0,Math.max(10,30-loc.length)).forEach(p=>{const b=document.createElement('button');b.innerHTML=`${esc(p.n)}<br><small>${p.m?esc(p.m)+' · ':''}${KT[p.t]} · ${esc(rlabel(p.r))}</small>`;b.onclick=()=>{map.setLevel(4);map.setCenter(LL(p.ll));openRemote(p);if(innerWidth<=640)panel.classList.add('min')};res.appendChild(b)})}
+  else if(!IDX){loadIdx().then(()=>{if(q.value.trim()===v)qInput()})}}
+q.addEventListener('input',qInput);
+let GOAT=0;function goRegion(r){if(!r||Date.now()-GOAT<800)return;GOAT=Date.now();if(FQ)hideFQ();closePop();pick(r,true)}
+function rmgo(e){const t=e.target.closest&&e.target.closest('.rmgo');if(!t)return;e.preventDefault();e.stopPropagation();goRegion(t.dataset.r)}
+document.addEventListener('click',rmgo,true);
+
+const panel=document.getElementById('panel'),tg=document.getElementById('tg');
+const ptab=document.getElementById('ptab');
+async function hardReload(){const t=document.createElement('div');t.id='rtoast';t.textContent='최신 버전으로 새로고침 중…';document.body.appendChild(t);
+ try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg)await Promise.race([reg.update(),new Promise(r=>setTimeout(r,3000))]);
+  if(window.caches)for(const k of await caches.keys())if(k.startsWith('edu-shell'))await caches.delete(k)}catch(_){}
+ const u=new URL(location.href);u.searchParams.set('r',Date.now());location.replace(u.toString())}
+{const h=document.getElementById('ttl');let lp=null,long=false;
+ // 짧게 누르면 새로고침, 길게(0.8초) 누르면 관리자 화면
+ const down=()=>{long=false;clearTimeout(lp);lp=setTimeout(()=>{long=true;location.href='admin.html'},800)},up=()=>clearTimeout(lp);
+ h.addEventListener('pointerdown',down);['pointerup','pointerleave','pointercancel'].forEach(ev=>h.addEventListener(ev,up));h.addEventListener('contextmenu',e=>e.preventDefault());
+ h.onclick=()=>{if(!long)hardReload()};h.onkeydown=e=>{if(e.key==='Enter')hardReload()};
+ try{if(Object.keys(localStorage).some(k=>/^sb-.*-auth-token$/.test(k)))document.getElementById('admgo').hidden=false}catch(_){}}function away(on){panel.classList.toggle('away',on);ptab.hidden=!on;panel.style.transform=''}
+document.getElementById('hidep').onclick=()=>away(true);ptab.onclick=()=>away(false);
+(()=>{let x0=0,y0=0,dx=0,mode=0;// 0: 판단 전, 1: 가로 끌기, 2: 세로(스크롤)
+ panel.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=0;mode=0},{passive:true});
+ panel.addEventListener('touchmove',e=>{const t=e.touches[0];const ddx=t.clientX-x0,ddy=t.clientY-y0;
+  if(mode===0&&(Math.abs(ddx)>10||Math.abs(ddy)>10))mode=Math.abs(ddx)>Math.abs(ddy)*1.3&&ddx<0?1:2;
+  if(mode===1){dx=Math.min(0,ddx);panel.classList.add('drag');panel.style.transform=`translateX(${dx}px)`}},{passive:true});
+ panel.addEventListener('touchend',()=>{if(mode===1){panel.classList.remove('drag');if(dx<-60)away(true);else panel.style.transform=''}mode=0});
+ let tx=0;ptab.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+ ptab.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(d>20){e.preventDefault();away(false)}});
+})();
+tg.onclick=()=>{panel.classList.toggle('min');tg.textContent=panel.classList.contains('min')?'펼치기':'접기'};
+if(innerWidth<=640){panel.classList.add('min');tg.textContent='펼치기'}
+const DEF='학원가:중계동 은행사거리 학원가',DEF2=R2A['노원구']?'노원구':Object.keys(R2A)[0];
+const start=decodeURIComponent(location.hash.slice(1))||DEF;
+(ACC.on()?ACC.zones():fetch('zones.json?v=20261127i',{cache:'no-cache'}).then(x=>x.json())).then(j=>{ZONES=j.zones;if(ZONES.length&&!ZONES.some(z=>z.a===ZTAB))ZTAB=ZONES[0].a}).catch(()=>{}).finally(()=>{let sr=start;
+ if(sr.startsWith('학원가:')){if(!ZONES.some(z=>'학원가:'+z.name===sr))sr=ZONES.some(z=>'학원가:'+z.name===DEF)?DEF:DEF2}else if(!(R2A[sr]||GRPS[sr]||(sr.startsWith('전체:')&&AREAS[sr.slice(3)])))sr=DEF2;if(sr.startsWith('학원가:'))setMode('zone');pick(sr)});
+}
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+ // 새 버전이 배포되면 앱을 다시 열지 않아도 자동으로 새로고침
+ const hadCtrl=!!navigator.serviceWorker.controller;let reloaded=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtrl&&!reloaded){reloaded=true;location.reload()}});
+ addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+  const chk=()=>reg.update().catch(()=>{});setInterval(chk,10*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')chk()})}).catch(()=>{}));
+}
+(()=>{const b=document.getElementById('inst');let ev=null;
+ const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+ if(standalone)return;
+ const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ function help(html){let h=document.querySelector('.ihelp');if(h)h.remove();h=document.createElement('div');h.className='ihelp';h.innerHTML='<button aria-label="닫기">✕</button>'+html;h.firstChild.onclick=()=>h.remove();document.body.appendChild(h)}
+ addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;b.hidden=false});
+ addEventListener('appinstalled',()=>{b.hidden=true;ev=null});
+ if(ios)b.hidden=false;
+ b.onclick=async()=>{
+  if(ev){ev.prompt();const r=await ev.userChoice.catch(()=>({}));if(r.outcome==='accepted')b.hidden=true;ev=null;return}
+  if(ios){help('<b>아이폰 설치</b><br>사파리 아래쪽 <b>공유 버튼(□↑)</b> → <b>홈 화면에 추가</b>를 누르세요.<br><small>사파리에서만 설치할 수 있습니다.</small><div id="pairc"></div>');
+   if(window.ACC&&ACC.on()){const pc=document.getElementById('pairc');pc.innerHTML='<br><small>연결 코드 받는 중…</small>';
+    ACC.pairCode().then(c=>{pc.innerHTML='<br>설치한 앱을 처음 열면 아래 <b>연결 코드</b>를 넣어 주세요 (15분 유효).<div style="font-size:22px;font-weight:800;letter-spacing:2px;margin:6px 0">'+c+'</div>'}).catch(()=>{pc.innerHTML='<br><small>연결 코드를 받지 못했습니다. 다시 눌러 주세요.</small>'})}}
+  else help('<b>앱 설치</b><br>브라우저 메뉴(⋮ 또는 ≡)에서 <b>앱 설치</b> 또는 <b>홈 화면에 추가 → 앱</b>을 누르세요.');
+ };
+})();
+</script>
+</body>
+</html>
