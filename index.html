@@ -182,7 +182,7 @@ body{font:14px var(--font);color:var(--ink);background:#eef1ec}
 </aside>
 <button id="ptab" hidden aria-label="메뉴 다시 보기" title="메뉴 다시 보기">›</button>
 <div id="fqchip" hidden><div class="r1"><span>검색 결과만 · <b id="fqtxt"></b></span><button id="fqx">해제</button></div><div class="r2" id="fqot" hidden></div></div>
-<script src="acc.js?v=2"></script>
+<script src="acc.js?v=3"></script>
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=ac4908c32fc80026dd5ea1a9c5982527&libraries=services&autoload=false"></script>
 <script>
 (function(){
@@ -399,7 +399,7 @@ function pick(r,user){CUR=r;if(r.startsWith('학원가:')){const z=ZONES.find(x=
  rq.value='';renderList();q.value='';res.innerHTML='';
  $i('curK').textContent=r.startsWith('학원가:')?'현재 학원가':'현재 지역';const lb=label(r);$i('curName').textContent=lb;$i('curName').title=lb;document.title=lb+' · A-Atlas EduMap';
  const el=list.querySelector('.row[aria-pressed=true]');if(el){const box=el.closest('details')||el;if(box.offsetTop<list.scrollTop||box.offsetTop+el.offsetHeight>list.scrollTop+list.clientHeight)list.scrollTop=Math.max(0,box.offsetTop-6)}
- load(r);history.replaceState(null,'','#'+encodeURIComponent(r));if(user&&innerWidth<=640){panel.classList.add('min');tg.textContent='펼치기'}}
+ load(r);history.replaceState(null,'','#'+encodeURIComponent(r));try{localStorage.setItem('eduLast',r)}catch(_){}if(user&&innerWidth<=640){panel.classList.add('min');tg.textContent='펼치기'}}
 list.addEventListener('click',e=>{const b=e.target.closest('.row');if(b)pick(b.dataset.r,true)});
 tabsEl.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;if(MODE==='zone')ZTAB=b.dataset.a;else TAB=b.dataset.a;renderList();list.scrollTop=0};
 rq.addEventListener('input',()=>{renderList();list.scrollTop=0});rq.addEventListener('keydown',e=>{if(e.key==='Escape')rqx.click();if(e.key==='Enter'){e.preventDefault();rqGo()}});
@@ -507,9 +507,15 @@ document.getElementById('hidep').onclick=()=>away(true);ptab.onclick=()=>away(fa
 tg.onclick=()=>{panel.classList.toggle('min');tg.textContent=panel.classList.contains('min')?'펼치기':'접기'};
 if(innerWidth<=640){panel.classList.add('min');tg.textContent='펼치기'}
 const DEF='학원가:중계동 은행사거리 학원가',DEF2=R2A['노원구']?'노원구':Object.keys(R2A)[0];
-const start=decodeURIComponent(location.hash.slice(1))||DEF;
+let LASTV=null;try{LASTV=localStorage.getItem('eduLast')}catch(_){}
+const ADMST=ACC.on()&&ACC.start?ACC.start():null;
+const start=decodeURIComponent(location.hash.slice(1))||LASTV||ADMST||DEF;
+const AUTOLOC=!location.hash.slice(1)&&!LASTV&&!ADMST&&ACC.on();
 (ACC.on()?ACC.zones():fetch('zones.json?v=20261127i',{cache:'no-cache'}).then(x=>x.json())).then(j=>{ZONES=j.zones;if(ZONES.length&&!ZONES.some(z=>z.a===ZTAB))ZTAB=ZONES[0].a}).catch(()=>{}).finally(()=>{let sr=start;
- if(sr.startsWith('학원가:')){if(!ZONES.some(z=>'학원가:'+z.name===sr))sr=ZONES.some(z=>'학원가:'+z.name===DEF)?DEF:DEF2}else if(!(R2A[sr]||GRPS[sr]||(sr.startsWith('전체:')&&AREAS[sr.slice(3)])))sr=DEF2;if(sr.startsWith('학원가:'))setMode('zone');pick(sr)});
+ if(sr.startsWith('학원가:')){if(!ZONES.some(z=>'학원가:'+z.name===sr))sr=ZONES.some(z=>'학원가:'+z.name===DEF)?DEF:DEF2}else if(!(R2A[sr]||GRPS[sr]||(sr.startsWith('전체:')&&AREAS[sr.slice(3)])))sr=DEF2;if(sr.startsWith('학원가:'))setMode('zone');pick(sr);if(AUTOLOC)startByLoc(sr)});
+function startByLoc(sr0){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(async p=>{const ll=[p.coords.latitude,p.coords.longitude];const idx=await loadIdx();if(!idx)return;
+  let best=null,bd=25e6;const k=Math.cos(ll[0]*Math.PI/180);for(const w of idx.rows){const dy=(w[3]/1e4-ll[0])*111000,dx=(w[4]/1e4-ll[1])*111000*k,d=dx*dx+dy*dy;if(d<bd){bd=d;best=w}}
+  if(best){const r=idx.regs[best[2]];if(r&&CUR===sr0&&r!==CUR&&(R2A[r]||GRPS[r]))pick(r)}},()=>{},{enableHighAccuracy:false,timeout:10000,maximumAge:600000})}
 }
 })();
 </script>

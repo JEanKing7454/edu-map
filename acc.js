@@ -92,5 +92,5 @@ function filterAreas(A){const ok=new Set(Object.keys(H.regs));
   for(const a of Object.keys(A)){A[a].g=A[a].g.map(([n,ms])=>[n,ms.filter(r=>ok.has(r))]).filter(g=>g[1].length);if(!A[a].g.length)delete A[a]}}
 const pairCode=()=>rpc('edu_pair_create',{p_token:tok,p_device:dev});
 
-return {ready,on:()=>on,region,zones,search,filterAreas,pairCode,ios,standalone,expires:()=>H&&H.expires_at};
+return {ready,on:()=>on,region,zones,search,filterAreas,pairCode,ios,standalone,expires:()=>H&&H.expires_at,start:()=>H&&H.start||null};
 })();
