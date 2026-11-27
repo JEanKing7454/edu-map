@@ -376,7 +376,7 @@ function rqGo(){renderList();const b=list.querySelector('.row');if(rq.value.trim
 document.getElementById('rqgo').onclick=rqGo;rqx.onclick=()=>{rq.value='';renderList();rq.focus()};
 document.querySelectorAll('.mode button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 const CC={'보습·입시':'#c2410c','외국어':'#2563eb','음악':'#db2777','미술':'#ca8a04','무용·댄스':'#9333ea','코딩·컴퓨터':'#0891b2','독서실':'#64748b','직업·성인':'#65a30d','기타':'#a3a3a3','미기재':'#d4d4d4'};
-function showZone(z){const s=z.st,tot=s.aca+s.kyo,won=x=>x?(x/10000).toLocaleString('ko-KR',{maximumFractionDigits:1})+'만 원':'-';const cats=Object.entries(s.cat);
+function showZone(z){const s=z.st,tot=s.aca+s.kyo,won=x=>x?(x/10000).toLocaleString('ko-KR',{maximumFractionDigits:1})+'만 원':'-';const cats=Object.entries(s.cat).sort((a,b)=>b[1]-a[1]);
  const Y=[];for(let y=2010;y<=2026;y++)Y.push([y,s.yr[y]||0]);const pre=Object.entries(s.yr).filter(([y])=>+y<2010).reduce((a,[,v])=>a+v,0),mx=Math.max(1,...Y.map(x=>x[1]));
  const sc=z.sch[ZR],sn=['초','중','고'].reduce((a,l)=>a+sc[l][0],0),ss=['초','중','고'].reduce((a,l)=>a+sc[l][1],0);
  zi.innerHTML=`<h2>${esc(z.name)}<small>${z.sido} ${esc(sh(z.sgg))}</small></h2>
