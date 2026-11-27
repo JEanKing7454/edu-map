@@ -347,7 +347,7 @@ async function meArea(ll){if(meNear(ll))return;const idx=await loadIdx();if(!idx
   let best=null,bd=25e6;const k=Math.cos(ll[0]*Math.PI/180);for(const w of idx.rows){const dy=(w[3]/1e4-ll[0])*111000,dx=(w[4]/1e4-ll[1])*111000*k,d=dx*dx+dy*dy;if(d<bd){bd=d;best=w}}
   if(!best){meToast('이 위치 주변은 열린 지역이 아니라 학원 정보가 없습니다',5000);return}
   const r=idx.regs[best[2]];try{if(FQ)hideFQ();closePop();pick(r,true)}catch(_){}
-  setTimeout(()=>{if(ME.ll){map.setLevel(4);map.setCenter(new kakao.maps.LatLng(ME.ll[0],ME.ll[1]))}},900)}
+  const t0=Date.now();const tk=()=>{if(!ME.ll)return;if(!meNear(ME.ll)&&Date.now()-t0<8000){setTimeout(tk,400);return}setTimeout(()=>{if(!ME.ll)return;map.setLevel(4);map.setCenter(new kakao.maps.LatLng(ME.ll[0],ME.ll[1]));ME.follow=true;meUi()},350)};setTimeout(tk,600)}
 function meFix(p){const ll=[p.coords.latitude,p.coords.longitude],acc=p.coords.accuracy||0,L=new kakao.maps.LatLng(ll[0],ll[1]);ME.ll=ll;
   if(!ME.dot){const el=document.createElement('div');el.className='medot';ME.dot=new kakao.maps.CustomOverlay({position:L,content:el,zIndex:30,xAnchor:.5,yAnchor:.5});
     ME.acc=new kakao.maps.Circle({center:L,radius:acc,strokeWeight:1,strokeColor:'#2563eb',strokeOpacity:.5,fillColor:'#2563eb',fillOpacity:.12})}
